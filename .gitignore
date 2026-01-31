@@ -1,0 +1,29 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# MySQL dumps
+*.sql
+
+# Alembic
+backend/migrations/versions/
+
+# VSCode
+.vscode/
+
+# Node/Vue
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Data pipeline
+/data_pipeline/data/
+
+# Outros
+.DS_Store
+.env
+backend/.env
+backend/.env.*
