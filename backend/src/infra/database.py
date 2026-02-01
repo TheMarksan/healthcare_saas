@@ -1,3 +1,4 @@
+import ssl
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -7,14 +8,23 @@ from typing import AsyncGenerator
 from core.config import settings
 
 
+# Configurar SSL para TiDB/PlanetScale
+connect_args = {}
+if settings.mysql_ssl:
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    connect_args = {"ssl": ssl_context}
+
 sync_engine = create_engine(
     settings.database_url,
     poolclass=QueuePool,
-    pool_size=20,
-    max_overflow=30,
+    pool_size=5,
+    max_overflow=10,
     pool_pre_ping=True,
-    pool_recycle=3600,
+    pool_recycle=300,
     echo=False,
+    connect_args=connect_args if settings.mysql_ssl else {},
 )
 
 async_engine = create_async_engine(
@@ -22,6 +32,7 @@ async_engine = create_async_engine(
     poolclass=NullPool,
     echo=False,
     future=True,
+    connect_args=connect_args if settings.mysql_ssl else {},
 )
 
 AsyncSessionLocal = async_sessionmaker(

@@ -30,17 +30,12 @@ class Settings(BaseSettings):
     cache_ttl: int = 300
     
     @property
-    def _ssl_param(self) -> str:
-        """Retorna parâmetro SSL para conexão (necessário para PlanetScale)"""
-        return "&ssl=true" if self.mysql_ssl else ""
-    
-    @property
     def database_url(self) -> str:
-        return f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4{self._ssl_param}"
+        return f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4"
     
     @property
     def async_database_url(self) -> str:
-        return f"mysql+asyncmy://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4{self._ssl_param}"
+        return f"mysql+asyncmy://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4"
     
     class Config:
         env_file = Path(__file__).resolve().parent.parent.parent / ".env"
