@@ -5,8 +5,13 @@
       title="Operadoras de Saúde"
       subtitle="Gerencie e visualize as operadoras cadastradas"
     >
-      <template #actions>
+      <template #mobile-toggle>
         <ThemeToggle />
+      </template>
+      <template #actions>
+        <div class="hidden sm:block">
+          <ThemeToggle />
+        </div>
       </template>
     </PageHeader>
 

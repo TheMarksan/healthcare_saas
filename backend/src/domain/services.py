@@ -11,36 +11,39 @@ class AnalyticsService:
     def __init__(self, session: AsyncSession):
         self.session = session
     
-    async def get_estatisticas_agregadas(self) -> EstatisticasResponse:
-        query = text("""
+    async def get_estatisticas_agregadas(self, uf: Optional[str] = None) -> EstatisticasResponse:
+        uf_filter = "AND uf = :uf" if uf else ""
+        uf_filter_operadoras = "WHERE uf = :uf" if uf else ""
+        
+        query = text(f"""
             SELECT 
-                (SELECT COUNT(DISTINCT registro_ans) FROM operadoras) AS total_operadoras,
-                (SELECT COALESCE(SUM(valor_despesas), 0) FROM despesas_trimestrais) AS total_despesas,
-                (SELECT COALESCE(AVG(valor_despesas), 0) FROM despesas_trimestrais WHERE valor_despesas > 0) AS media_geral
+                (SELECT COUNT(DISTINCT registro_ans) FROM operadoras {uf_filter_operadoras}) AS total_operadoras,
+                (SELECT COALESCE(SUM(valor_despesas), 0) FROM despesas_trimestrais WHERE 1=1 {uf_filter}) AS total_despesas,
+                (SELECT COALESCE(AVG(valor_despesas), 0) FROM despesas_trimestrais WHERE valor_despesas > 0 {uf_filter}) AS media_geral
         """)
-        result = await self.session.execute(query)
+        result = await self.session.execute(query, {"uf": uf} if uf else {})
         row = result.fetchone()
         
-        top_ufs_query = text("""
+        top_ufs_query = text(f"""
             SELECT uf, SUM(valor_despesas) AS total
             FROM despesas_trimestrais
-            WHERE uf IS NOT NULL AND uf != ''
+            WHERE uf IS NOT NULL AND uf != '' {uf_filter}
             GROUP BY uf
             ORDER BY total DESC
             LIMIT 5
         """)
-        top_ufs_result = await self.session.execute(top_ufs_query)
+        top_ufs_result = await self.session.execute(top_ufs_query, {"uf": uf} if uf else {})
         top_ufs = [{"uf": r.uf, "total": float(r.total)} for r in top_ufs_result.fetchall()]
         
-        top_operadoras_query = text("""
+        top_operadoras_query = text(f"""
             SELECT razao_social, cnpj, SUM(valor_despesas) AS total
             FROM despesas_trimestrais
-            WHERE valor_despesas > 0
+            WHERE valor_despesas > 0 {uf_filter}
             GROUP BY razao_social, cnpj
             ORDER BY total DESC
             LIMIT 5
         """)
-        top_operadoras_result = await self.session.execute(top_operadoras_query)
+        top_operadoras_result = await self.session.execute(top_operadoras_query, {"uf": uf} if uf else {})
         top_operadoras = [
             {"razao_social": r.razao_social, "cnpj": r.cnpj, "total": float(r.total)} 
             for r in top_operadoras_result.fetchall()
@@ -55,8 +58,10 @@ class AnalyticsService:
             updated_at=datetime.utcnow()
         )
     
-    async def get_top_crescimento(self, limit: int = 5) -> list[TopOperadoraCrescimento]:
-        query = text("""
+    async def get_top_crescimento(self, limit: int = 5, uf: Optional[str] = None) -> list[TopOperadoraCrescimento]:
+        uf_filter = "AND dp.uf = :uf" if uf else ""
+        
+        query = text(f"""
             WITH periodo_range AS (
                 SELECT 
                     MIN(CONCAT(ano, LPAD(trimestre, 2, '0'))) AS primeiro_periodo,
@@ -86,12 +91,15 @@ class AnalyticsService:
                 ROUND(((du.valor_final - dp.valor_inicial) / dp.valor_inicial) * 100, 2) AS crescimento_percentual
             FROM despesas_primeira dp
             INNER JOIN despesas_ultima du ON dp.registro_ans = du.registro_ans AND dp.uf = du.uf
-            WHERE dp.valor_inicial > 0 AND du.valor_final > 0
+            WHERE dp.valor_inicial > 0 AND du.valor_final > 0 {uf_filter}
             ORDER BY crescimento_percentual DESC
             LIMIT :limit
         """)
         
-        result = await self.session.execute(query, {"limit": limit})
+        params = {"limit": limit}
+        if uf:
+            params["uf"] = uf
+        result = await self.session.execute(query, params)
         rows = result.fetchall()
         
         return [
@@ -147,8 +155,10 @@ class AnalyticsService:
             for row in rows
         ]
     
-    async def get_operadoras_acima_media(self, min_trimestres: int = 2) -> tuple[int, list[OperadoraAcimaMedia]]:
-        query = text("""
+    async def get_operadoras_acima_media(self, min_trimestres: int = 2, uf: Optional[str] = None) -> tuple[int, list[OperadoraAcimaMedia]]:
+        uf_filter = "AND d.uf = :uf" if uf else ""
+        
+        query = text(f"""
             WITH media_por_trimestre AS (
                 SELECT ano, trimestre, AVG(valor_despesas) AS media_geral
                 FROM despesas_trimestrais
@@ -168,7 +178,7 @@ class AnalyticsService:
                     ) AS periodos
                 FROM despesas_trimestrais d
                 INNER JOIN media_por_trimestre m ON d.ano = m.ano AND d.trimestre = m.trimestre
-                WHERE d.valor_despesas > 0
+                WHERE d.valor_despesas > 0 {uf_filter}
                 GROUP BY d.registro_ans, d.razao_social, d.uf
                 HAVING trimestres_acima >= :min_trimestres
             )
@@ -177,10 +187,13 @@ class AnalyticsService:
             LIMIT 50
         """)
         
-        result = await self.session.execute(query, {"min_trimestres": min_trimestres})
+        params = {"min_trimestres": min_trimestres}
+        if uf:
+            params["uf"] = uf
+        result = await self.session.execute(query, params)
         rows = result.fetchall()
         
-        count_query = text("""
+        count_query = text(f"""
             SELECT COUNT(*) FROM (
                 SELECT d.registro_ans
                 FROM despesas_trimestrais d
@@ -189,13 +202,13 @@ class AnalyticsService:
                     FROM despesas_trimestrais WHERE valor_despesas > 0
                     GROUP BY ano, trimestre
                 ) m ON d.ano = m.ano AND d.trimestre = m.trimestre
-                WHERE d.valor_despesas > 0
+                WHERE d.valor_despesas > 0 {uf_filter}
                 GROUP BY d.registro_ans, d.uf
                 HAVING SUM(CASE WHEN d.valor_despesas > m.media_geral THEN 1 ELSE 0 END) >= :min_trimestres
             ) AS subquery
         """)
         
-        count_result = await self.session.execute(count_query, {"min_trimestres": min_trimestres})
+        count_result = await self.session.execute(count_query, params)
         total = count_result.scalar_one()
         
         operadoras = [

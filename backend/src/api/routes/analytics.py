@@ -21,15 +21,17 @@ CACHE_KEY_ESTATISTICAS = "estatisticas_agregadas"
 
 @router.get("", response_model=EstatisticasResponse)
 async def get_estatisticas(
+    uf: str = Query(None, description="Filtrar por UF"),
     db: AsyncSession = Depends(get_db)
 ):
-    cached = cache.get(CACHE_KEY_ESTATISTICAS)
+    cache_key = f"{CACHE_KEY_ESTATISTICAS}_{uf or 'all'}"
+    cached = cache.get(cache_key)
     if cached:
         return cached
     
     service = AnalyticsService(db)
-    result = await service.get_estatisticas_agregadas()
-    cache.set(CACHE_KEY_ESTATISTICAS, result, ttl=300)
+    result = await service.get_estatisticas_agregadas(uf=uf)
+    cache.set(cache_key, result, ttl=300)
     return result
 
 
@@ -56,10 +58,11 @@ async def get_alta_variabilidade(
 @router.get("/crescimento", response_model=list[TopOperadoraCrescimento])
 async def get_top_crescimento(
     limit: int = Query(5, ge=1, le=20),
+    uf: str = Query(None, description="Filtrar por UF"),
     db: AsyncSession = Depends(get_db)
 ):
     service = AnalyticsService(db)
-    return await service.get_top_crescimento(limit=limit)
+    return await service.get_top_crescimento(limit=limit, uf=uf)
 
 
 @router.get("/despesas-por-uf", response_model=list[DespesaPorUF])
@@ -74,10 +77,11 @@ async def get_despesas_por_uf(
 @router.get("/acima-media")
 async def get_operadoras_acima_media(
     min_trimestres: int = Query(2, ge=1, le=4),
+    uf: str = Query(None, description="Filtrar por UF"),
     db: AsyncSession = Depends(get_db)
 ):
     service = AnalyticsService(db)
-    total, operadoras = await service.get_operadoras_acima_media(min_trimestres=min_trimestres)
+    total, operadoras = await service.get_operadoras_acima_media(min_trimestres=min_trimestres, uf=uf)
     
     return {
         "total_operadoras": total,

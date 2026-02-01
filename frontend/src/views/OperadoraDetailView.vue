@@ -17,8 +17,13 @@
         :title="operadora?.razao_social || 'Carregando...'"
         :subtitle="operadora ? `Registro ANS: ${operadora.registro_ans}` : ''"
       >
-        <template #actions>
+        <template #mobile-toggle>
           <ThemeToggle />
+        </template>
+        <template #actions>
+          <div class="hidden sm:block">
+            <ThemeToggle />
+          </div>
         </template>
       </PageHeader>
     </div>

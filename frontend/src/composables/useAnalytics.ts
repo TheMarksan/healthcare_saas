@@ -64,11 +64,12 @@ export function useAnalytics() {
     return `${value.toFixed(2)}%`;
   };
 
-  const fetchEstatisticas = async () => {
+  const fetchEstatisticas = async (uf?: string) => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await fetch(`${API_BASE}/estatisticas`);
+      const params = uf ? `?uf=${encodeURIComponent(uf)}` : '';
+      const response = await fetch(`${API_BASE}/estatisticas${params}`);
       if (!response.ok) throw new Error('Erro ao buscar estatísticas');
       estatisticas.value = await response.json();
     } catch (e) {
@@ -79,9 +80,11 @@ export function useAnalytics() {
     }
   };
 
-  const fetchTopCrescimento = async (limit: number = 5) => {
+  const fetchTopCrescimento = async (limit: number = 5, uf?: string) => {
     try {
-      const response = await fetch(`${API_BASE}/estatisticas/crescimento?limit=${limit}`);
+      let params = `limit=${limit}`;
+      if (uf) params += `&uf=${encodeURIComponent(uf)}`;
+      const response = await fetch(`${API_BASE}/estatisticas/crescimento?${params}`);
       if (!response.ok) throw new Error('Erro ao buscar top crescimento');
       topCrescimento.value = await response.json();
     } catch (e) {
@@ -99,9 +102,11 @@ export function useAnalytics() {
     }
   };
 
-  const fetchOperadorasAcimaMedia = async (minTrimestres: number = 2) => {
+  const fetchOperadorasAcimaMedia = async (minTrimestres: number = 2, uf?: string) => {
     try {
-      const response = await fetch(`${API_BASE}/estatisticas/acima-media?min_trimestres=${minTrimestres}`);
+      let params = `min_trimestres=${minTrimestres}`;
+      if (uf) params += `&uf=${encodeURIComponent(uf)}`;
+      const response = await fetch(`${API_BASE}/estatisticas/acima-media?${params}`);
       if (!response.ok) throw new Error('Erro ao buscar operadoras acima da média');
       operadorasAcimaMedia.value = await response.json();
     } catch (e) {
@@ -109,13 +114,13 @@ export function useAnalytics() {
     }
   };
 
-  const fetchAll = async () => {
+  const fetchAll = async (uf?: string) => {
     loading.value = true;
     await Promise.all([
-      fetchEstatisticas(),
-      fetchTopCrescimento(),
+      fetchEstatisticas(uf),
+      fetchTopCrescimento(5, uf),
       fetchDespesasPorUF(),
-      fetchOperadorasAcimaMedia(),
+      fetchOperadorasAcimaMedia(2, uf),
     ]);
     loading.value = false;
   };
@@ -143,8 +148,10 @@ export function useAnalytics() {
     return estatisticas.value;
   });
 
-  const setUF = (uf: string) => {
+  const setUF = async (uf: string) => {
     selectedUF.value = uf;
+    // Refetch data with the new UF filter
+    await fetchAll(uf || undefined);
   };
 
   // Get unique UFs from despesas data

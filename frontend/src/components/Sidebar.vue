@@ -1,7 +1,76 @@
 <template>
+  <!-- Mobile Header (< 600px) -->
+  <header
+    class="mobile-header fixed top-0 left-0 right-0 z-50 h-14 px-4 flex items-center justify-between bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm"
+  >
+    <router-link to="/dashboard" class="text-xl font-bold text-primary hover:opacity-80 transition-opacity">
+      Healthcare
+    </router-link>
+    <button
+      @click="mobileMenuOpen = !mobileMenuOpen"
+      class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-secondary dark:hover:bg-gray-800 transition-colors"
+      aria-label="Menu"
+    >
+      <X v-if="mobileMenuOpen" class="w-6 h-6" />
+      <Menu v-else class="w-6 h-6" />
+    </button>
+  </header>
+
+  <!-- Mobile Dropdown Menu -->
+  <transition name="dropdown">
+    <div
+      v-if="mobileMenuOpen"
+      class="mobile-header fixed top-14 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-lg"
+    >
+      <nav class="px-4 py-3 space-y-1">
+        <template v-for="item in menuItems" :key="item.name">
+          <router-link
+            :to="item.route"
+            custom
+            v-slot="{ isActive, navigate }"
+          >
+            <button
+              @click="navigate(); mobileMenuOpen = false"
+              :class="cn(
+                'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+                isActive
+                  ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-secondary dark:hover:bg-gray-800 hover:text-primary dark:hover:text-primary'
+              )"
+            >
+              <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
+              <span class="font-medium">{{ item.name }}</span>
+            </button>
+          </router-link>
+        </template>
+        
+        <!-- Logout in mobile menu -->
+        <button
+          :class="cn(
+            'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+            'text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500'
+          )"
+        >
+          <LogOut class="w-5 h-5 flex-shrink-0" />
+          <span class="font-medium">Sair</span>
+        </button>
+      </nav>
+    </div>
+  </transition>
+
+  <!-- Mobile backdrop -->
+  <transition name="fade">
+    <div
+      v-if="mobileMenuOpen"
+      class="mobile-header fixed inset-0 top-14 z-30 bg-black/20 backdrop-blur-sm"
+      @click="mobileMenuOpen = false"
+    />
+  </transition>
+
+  <!-- Desktop Sidebar (>= 600px) -->
   <aside
     :class="cn(
-      'fixed left-0 top-0 z-50 h-screen backdrop-blur-md border-r shadow-xl transition-all duration-300 ease-in-out',
+      'desktop-sidebar fixed left-0 top-0 z-50 h-screen backdrop-blur-md border-r shadow-xl transition-all duration-300 ease-in-out',
       'bg-white/95 border-gray-200 dark:bg-gray-900/95 dark:border-gray-700',
       isOpen ? 'w-64' : 'w-16'
     )"
@@ -80,10 +149,13 @@ import {
   LogOut,
   Pin,
   PinOff,
+  Menu,
+  X,
 } from 'lucide-vue-next';
 
 const isOpen = ref(false);
 const isPinned = ref(false);
+const mobileMenuOpen = ref(false);
 
 const menuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
@@ -92,6 +164,27 @@ const menuItems = [
 </script>
 
 <style scoped>
+/* Hide mobile header on desktop, show on mobile */
+.mobile-header {
+  display: none;
+}
+
+/* Hide desktop sidebar on mobile, show on desktop */
+.desktop-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 599px) {
+  .mobile-header {
+    display: flex;
+  }
+  
+  .desktop-sidebar {
+    display: none;
+  }
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -109,5 +202,15 @@ const menuItems = [
 .slide-fade-leave-to {
   opacity: 0;
   transform: translateX(-10px);
+}
+
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

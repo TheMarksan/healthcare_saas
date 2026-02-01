@@ -2,12 +2,15 @@
   <div>
     <!-- Header -->
     <PageHeader title="Estatísticas" subtitle="Visão geral das despesas das operadoras de saúde">
+      <template #mobile-toggle>
+        <ThemeToggle />
+      </template>
       <template #actions>
-        <div class="flex items-center gap-4">
-          <Select v-model="selectedUF" class="w-40" @update:modelValue="setUF">
-            <option value="">Todos os estados</option>
-            <option v-for="uf in availableUFs" :key="uf" :value="uf">{{ uf }}</option>
-          </Select>
+        <Select v-model="selectedUF" class="w-full sm:w-40" @update:modelValue="setUF">
+          <option value="">Todos os estados</option>
+          <option v-for="uf in availableUFs" :key="uf" :value="uf">{{ uf }}</option>
+        </Select>
+        <div class="hidden sm:block">
           <ThemeToggle />
         </div>
       </template>
@@ -63,7 +66,7 @@
             <div>
               <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Acima da Média</p>
               <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                {{ filteredOperadorasAcimaMedia?.total_operadoras || 0 }}
+                {{ operadorasAcimaMedia?.total_operadoras || 0 }}
               </p>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 em 2+ trimestres
@@ -78,7 +81,7 @@
       </div>
 
       <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div :class="['grid grid-cols-1 gap-6', !selectedUF ? 'lg:grid-cols-2' : '']">
         <!-- Top 5 Operadoras -->
         <Card>
           <template #header>
@@ -116,8 +119,8 @@
           </div>
         </Card>
 
-        <!-- Distribuição por UF - Pie Chart -->
-        <Card>
+        <!-- Distribuição por UF - Pie Chart (hidden when UF is selected) -->
+        <Card v-if="!selectedUF">
           <template #header>
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Distribuição por UF</h3>
@@ -160,7 +163,7 @@
           <div class="h-[300px] overflow-y-auto">
             <div class="space-y-3">
               <div
-                v-for="(op, index) in (filteredOperadorasAcimaMedia?.operadoras || []).slice(0, 10)"
+                v-for="(op, index) in (operadorasAcimaMedia?.operadoras || []).slice(0, 10)"
                 :key="index"
                 class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
               >
@@ -177,7 +180,7 @@
                   <Badge variant="warning">{{ op.trimestres_acima_media }} trim</Badge>
                 </div>
               </div>
-              <p v-if="!filteredOperadorasAcimaMedia?.operadoras?.length" class="text-center text-gray-500 dark:text-gray-400 py-8">
+              <p v-if="!operadorasAcimaMedia?.operadoras?.length" class="text-center text-gray-500 dark:text-gray-400 py-8">
                 Nenhuma operadora encontrada
               </p>
             </div>
@@ -185,8 +188,8 @@
         </Card>
       </div>
 
-      <!-- Doughnut Chart - All UFs -->
-      <Card>
+      <!-- Doughnut Chart - All UFs (hidden when UF is selected) -->
+      <Card v-if="!selectedUF">
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Média de Despesas por UF</h3>
@@ -249,7 +252,7 @@ const {
   estatisticas,
   topCrescimento,
   despesasPorUF,
-  filteredOperadorasAcimaMedia,
+  operadorasAcimaMedia,
   loading,
   selectedUF,
   availableUFs,

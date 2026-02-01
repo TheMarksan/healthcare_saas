@@ -5,7 +5,7 @@
     <Sidebar />
 
     <!-- Main Content -->
-    <main class="transition-all duration-300 ml-16 p-6">
+    <main class="transition-all duration-300 ml-0 sm:ml-16 pt-16 sm:pt-0 p-4 sm:p-6">
       <div class="max-w-7xl mx-auto">
         <router-view v-slot="{ Component }">
           <transition name="page-fade" mode="out-in">
