@@ -196,6 +196,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import ErrorState from '@/components/ErrorState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
+import { API_BASE } from '@/lib/api';
 
 type ErrorType = 'network' | 'server' | 'not-found' | 'generic';
 
@@ -275,7 +276,7 @@ async function fetchData() {
   errorType.value = null;
 
   try {
-    const response = await fetch(`/api/operadoras/registro/${registroAns}`);
+    const response = await fetch(`${API_BASE}/operadoras/registro/${registroAns}`);
 
     if (!response.ok) {
       if (response.status === 404) {

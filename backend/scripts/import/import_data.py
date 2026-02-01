@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
+"""
+Script de importação de dados para MySQL/TiDB.
+Usa INSERTs diretos para compatibilidade com TiDB Cloud.
+"""
 
 import sys
 import csv
 import os
+import ssl
 import pymysql
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent.parent / '.env')
+
+# Configuração SSL para TiDB/PlanetScale
+ssl_config = None
+if os.getenv('MYSQL_SSL', 'false').lower() in ('true', '1', 'yes'):
+    ssl_config = {'ssl': {'ssl_mode': 'VERIFY_IDENTITY'}}
 
 DB_CONFIG = {
     'host': os.getenv('MYSQL_HOST', 'localhost'),
@@ -17,13 +27,16 @@ DB_CONFIG = {
     'password': os.getenv('MYSQL_PASSWORD', ''),
     'database': os.getenv('MYSQL_DATABASE', 'healthcare_saas'),
     'charset': 'utf8mb4',
-    'cursorclass': pymysql.cursors.DictCursor
+    'cursorclass': pymysql.cursors.DictCursor,
+    **(ssl_config or {})
 }
 
 DATA_PATH = Path(__file__).parent.parent.parent.parent / 'data_pipeline' / 'data'
 
+
 def get_connection():
     return pymysql.connect(**DB_CONFIG)
+
 
 def create_import_log(conn, import_type, file_name):
     with conn.cursor() as cursor:
@@ -34,6 +47,7 @@ def create_import_log(conn, import_type, file_name):
         conn.commit()
         return cursor.lastrowid
 
+
 def update_import_log(conn, log_id, total, success, reject, status='completed', error=None):
     with conn.cursor() as cursor:
         cursor.execute("""
@@ -43,6 +57,14 @@ def update_import_log(conn, log_id, total, success, reject, status='completed', 
             WHERE id = %s
         """, (total, success, reject, status, error, log_id))
         conn.commit()
+
+
+def str_to_bool(value):
+    """Converte string para boolean."""
+    if value is None:
+        return False
+    return str(value).lower() in ('true', '1', 'yes')
+
 
 def import_operadoras(conn):
     file_path = DATA_PATH / 'operadoras' / 'operadoras_de_plano_de_saude_ativas.csv'
@@ -62,18 +84,32 @@ def import_operadoras(conn):
         with conn.cursor() as cursor:
             for row in reader:
                 total += 1
+                registro_ans = row.get('REGISTRO_OPERADORA')
+                
+                if not registro_ans:
+                    reject += 1
+                    continue
                 
                 try:
-                    cursor.callproc('sp_import_operadora', (
-                        row.get('REGISTRO_OPERADORA'),
-                        row.get('CNPJ'),
-                        row.get('Razao_Social'),
-                        row.get('Modalidade'),
-                        row.get('UF'),
-                        log_id,
-                        0,
-                        False
-                    ))
+                    # Verificar se já existe
+                    cursor.execute(
+                        "SELECT id FROM operadoras WHERE registro_ans = %s LIMIT 1",
+                        (registro_ans,)
+                    )
+                    existing = cursor.fetchone()
+                    
+                    if existing is None:
+                        cursor.execute("""
+                            INSERT INTO operadoras (registro_ans, cnpj, razao_social, modalidade, uf)
+                            VALUES (%s, %s, %s, %s, %s)
+                        """, (
+                            registro_ans,
+                            row.get('CNPJ'),
+                            row.get('Razao_Social'),
+                            row.get('Modalidade'),
+                            row.get('UF')
+                        ))
+                    
                     success += 1
                     
                     if total % 1000 == 0:
@@ -89,6 +125,7 @@ def import_operadoras(conn):
     update_import_log(conn, log_id, total, success, reject)
     print(f"Importação concluída: {success}/{total} registros importados")
 
+
 def import_despesas(conn):
     file_path = DATA_PATH / 'trimestrais_contabeis' / 'consolidado_despesas_agrupado.csv'
     
@@ -98,6 +135,13 @@ def import_despesas(conn):
     
     log_id = create_import_log(conn, 'despesas', file_path.name)
     total, success, reject = 0, 0, 0
+    
+    # Criar lookup de operadoras
+    operadora_ids = {}
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id, registro_ans FROM operadoras")
+        for row in cursor.fetchall():
+            operadora_ids[row['registro_ans']] = row['id']
     
     print(f"Importando despesas de {file_path}")
     
@@ -109,20 +153,36 @@ def import_despesas(conn):
                 total += 1
                 
                 try:
-                    cursor.callproc('sp_import_despesa', (
+                    registro_ans = row.get('RegistroANS')
+                    operadora_id = operadora_ids.get(registro_ans)
+                    
+                    # Converter valor
+                    valor = row.get('ValorDespesas', '0')
+                    try:
+                        valor_decimal = float(valor) if valor else 0.0
+                    except ValueError:
+                        valor_decimal = 0.0
+                    
+                    cursor.execute("""
+                        INSERT INTO despesas_trimestrais (
+                            operadora_id, registro_ans, cnpj, razao_social, uf, modalidade,
+                            ano, trimestre, valor_despesas,
+                            cadastro_incompleto, cnpj_conflict, cnpj_invalido, razao_social_ausente
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        operadora_id,
+                        registro_ans,
+                        row.get('CNPJ'),
                         row.get('RazaoSocial'),
                         row.get('UF'),
-                        row.get('Trimestre'),
-                        row.get('Ano'),
-                        row.get('CNPJ'),
-                        row.get('RegistroANS'),
                         row.get('Modalidade'),
-                        row.get('ValorDespesas'),
-                        row.get('CNPJConflict', 'False'),
-                        row.get('RazaoSocialAusente', 'False'),
-                        row.get('CadastroIncompleto', 'False'),
-                        row.get('CNPJInvalido', 'False'),
-                        False
+                        int(row.get('Ano', 0)),
+                        int(row.get('Trimestre', 0)),
+                        valor_decimal,
+                        str_to_bool(row.get('CadastroIncompleto')),
+                        str_to_bool(row.get('CNPJConflict')),
+                        str_to_bool(row.get('CNPJInvalido')),
+                        str_to_bool(row.get('RazaoSocialAusente'))
                     ))
                     success += 1
                     
@@ -139,15 +199,23 @@ def import_despesas(conn):
     update_import_log(conn, log_id, total, success, reject)
     print(f"Importação concluída: {success}/{total} registros importados")
 
+
 def import_metricas(conn):
     file_path = DATA_PATH / 'trimestrais_contabeis' / 'metrics' / 'metricas_operadoras.csv'
     
     if not file_path.exists():
-        print(f"Arquivo não encontrado: {file_path}")
+        print(f"Arquivo de métricas não encontrado (opcional): {file_path}")
         return
     
     log_id = create_import_log(conn, 'metricas', file_path.name)
     total, success, reject = 0, 0, 0
+    
+    # Criar lookup de operadoras
+    operadora_ids = {}
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id, registro_ans FROM operadoras")
+        for row in cursor.fetchall():
+            operadora_ids[row['registro_ans']] = row['id']
     
     print(f"Importando métricas de {file_path}")
     
@@ -159,23 +227,33 @@ def import_metricas(conn):
                 total += 1
                 
                 try:
-                    cursor.callproc('sp_import_metrica', (
-                        row.get('Ranking'),
+                    registro_ans = row.get('RegistroANS')
+                    operadora_id = operadora_ids.get(registro_ans)
+                    
+                    cursor.execute("""
+                        INSERT INTO metricas_operadoras (
+                            operadora_id, registro_ans, cnpj, razao_social, uf, modalidade,
+                            ranking, total_despesas, media_trimestral, desvio_padrao,
+                            coeficiente_variacao, alta_variabilidade, quantidade_trimestres,
+                            cadastro_incompleto, cnpj_conflict, razao_social_ausente
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        operadora_id,
+                        registro_ans,
+                        row.get('CNPJ'),
                         row.get('RazaoSocial'),
                         row.get('UF'),
-                        row.get('TotalDespesas'),
-                        row.get('MediaTrimestral'),
-                        row.get('DesvioPadrao'),
-                        row.get('CoeficienteVariacao'),
-                        row.get('AltaVariabilidade', 'False'),
-                        row.get('QuantidadeTrimestres'),
-                        row.get('CNPJConflict', 'False'),
-                        row.get('RazaoSocialAusente', 'False'),
-                        row.get('CadastroIncompleto', 'False'),
-                        row.get('RegistroANS'),
                         row.get('Modalidade'),
-                        row.get('CNPJ'),
-                        False
+                        int(row.get('Ranking', 0)) if row.get('Ranking') else None,
+                        float(row.get('TotalDespesas', 0) or 0),
+                        float(row.get('MediaTrimestral', 0) or 0),
+                        float(row.get('DesvioPadrao', 0) or 0),
+                        float(row.get('CoeficienteVariacao', 0) or 0),
+                        str_to_bool(row.get('AltaVariabilidade')),
+                        int(row.get('QuantidadeTrimestres', 0) or 0),
+                        str_to_bool(row.get('CadastroIncompleto')),
+                        str_to_bool(row.get('CNPJConflict')),
+                        str_to_bool(row.get('RazaoSocialAusente'))
                     ))
                     success += 1
                     
@@ -192,10 +270,12 @@ def import_metricas(conn):
     update_import_log(conn, log_id, total, success, reject)
     print(f"Importação concluída: {success}/{total} registros importados")
 
+
 def main():
     try:
+        print(f"Conectando a {DB_CONFIG['host']}:{DB_CONFIG['port']}...")
         conn = get_connection()
-        print("Conectado ao MySQL")
+        print("✓ Conectado ao banco de dados")
         
         import_operadoras(conn)
         import_despesas(conn)
@@ -207,8 +287,9 @@ def main():
         print(f"Erro: {e}")
         sys.exit(1)
     finally:
-        if conn:
+        if 'conn' in locals() and conn:
             conn.close()
+
 
 if __name__ == '__main__':
     main()

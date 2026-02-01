@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { API_BASE } from '@/lib/api';
 
 export interface Operadora {
   id: number;
@@ -67,7 +68,7 @@ export function useOperadoras() {
       if (modalidadeValue) params.append('modalidade', modalidadeValue);
       if (cursor) params.append('cursor', cursor);
 
-      const res = await fetch(`/api/operadoras?${params.toString()}`);
+      const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`);
 
       if (!res.ok) {
         if (res.status === 404) {
@@ -200,7 +201,7 @@ export function useOperadoras() {
         if (modalidade.value) params.append('modalidade', modalidade.value);
         if (cursor) params.append('cursor', cursor);
 
-        const res = await fetch(`/api/operadoras?${params.toString()}`);
+        const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`);
         const data: OperadoraListResponse = await res.json();
 
         if (p === targetPage) {

@@ -1,0 +1,30 @@
+# Render Blueprint - Backend FastAPI
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: healthcare-saas-api
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: |
+      cd backend && pip install -r requirements.txt
+    startCommand: |
+      cd backend/src && uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: MYSQL_HOST
+        sync: false  # Será configurado manualmente (PlanetScale)
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_DATABASE
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+      - key: CORS_ORIGINS
+        sync: false  # URL do Vercel
+    healthCheckPath: /health
+    autoDeploy: true

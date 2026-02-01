@@ -1,0 +1,97 @@
+# GitHub Actions - Pipeline de Atualização Mensal
+# Executa no dia 5 de cada mês às 6h UTC (3h Brasília)
+
+name: Update Pipeline Data
+
+on:
+  schedule:
+    # Dia 5 de cada mês às 6:00 UTC (dados ANS geralmente atualizam início do mês)
+    - cron: '0 6 5 * *'
+  
+  # Permite execução manual pelo GitHub
+  workflow_dispatch:
+    inputs:
+      skip_download:
+        description: 'Pular download (usar dados existentes)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pymysql cryptography
+      
+      - name: Download data from ANS
+        if: ${{ github.event.inputs.skip_download != 'true' }}
+        run: |
+          cd data_pipeline
+          python download.py
+        continue-on-error: false
+      
+      - name: Enrich and validate data
+        run: |
+          cd data_pipeline
+          python enrich.py
+      
+      - name: Import to Database
+        env:
+          MYSQL_HOST: ${{ secrets.DB_HOST }}
+          MYSQL_USER: ${{ secrets.DB_USER }}
+          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.DB_DATABASE }}
+          MYSQL_PORT: ${{ secrets.DB_PORT || '3306' }}
+          MYSQL_SSL: 'true'
+        run: |
+          cd backend/scripts/import
+          python import_data.py
+          python create_placeholder_operadoras.py
+      
+      - name: Generate metrics (optional)
+        run: |
+          cd data_pipeline
+          python analyze.py || true
+        continue-on-error: true
+      
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pipeline-logs-${{ github.run_number }}
+          path: |
+            data_pipeline/data/trimestrais_contabeis/logs/
+          retention-days: 30
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Pipeline failed! Check logs for details."
+          # Adicione aqui integração com Slack/Discord/Email se desejar
+
+  # Job opcional: manter Render acordado
+  # Descomente se quiser evitar cold starts
+  # 
+  # keep-alive:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Ping Render API
+  #       run: |
+  #         curl -s -o /dev/null -w "%{http_code}" ${{ secrets.RENDER_API_URL }}/health

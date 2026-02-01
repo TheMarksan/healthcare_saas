@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue';
-
-const API_BASE = '/api';
+import { API_BASE } from '@/lib/api';
 
 export interface Estatisticas {
   total_operadoras: number;

@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { ref, watchEffect, onMounted } from 'vue';
+import { API_BASE } from '@/lib/api';
 
 const props = defineProps<{ modelValue?: string }>();
 const emit = defineEmits(['update:modalidade']);
@@ -26,7 +27,7 @@ watchEffect(() => {
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/operadoras/modalidades');
+    const res = await fetch(`${API_BASE}/operadoras/modalidades`);
     if (res.ok) {
       modalidades.value = await res.json();
     }

@@ -179,6 +179,7 @@ import ThemeToggle from '@/components/ThemeToggle.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import ErrorState from '@/components/ErrorState.vue';
 import { AlertTriangle, FileX } from 'lucide-vue-next';
+import { API_BASE } from '@/lib/api';
 
 type TabType = 'unmatched' | 'sem-despesas';
 type ErrorType = 'network' | 'server' | 'not-found' | 'generic';
@@ -227,7 +228,7 @@ const tabConfig = {
     icon: AlertTriangle,
     iconClass: 'text-amber-600 dark:text-amber-400',
     badgeVariant: 'warning' as const,
-    endpoint: '/api/logs/unmatched',
+    endpoint: `${API_BASE}/logs/unmatched`,
   },
   'sem-despesas': {
     title: 'Operadoras Sem Despesas',
@@ -235,13 +236,13 @@ const tabConfig = {
     icon: FileX,
     iconClass: 'text-red-600 dark:text-red-400',
     badgeVariant: 'destructive' as const,
-    endpoint: '/api/logs/sem-despesas',
+    endpoint: `${API_BASE}/logs/sem-despesas`,
   },
 };
 
 async function fetchSummary() {
   try {
-    const response = await fetch('/api/logs');
+    const response = await fetch(`${API_BASE}/logs`);
     if (!response.ok) throw new Error('Erro ao carregar resumo');
     const data = await response.json();
     summary.unmatched = data.unmatched_operadoras || 0;

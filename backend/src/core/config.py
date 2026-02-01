@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     mysql_user: str = "root"
     mysql_password: str = ""
     mysql_database: str = "healthcare_saas"
+    mysql_ssl: bool = False  # True para PlanetScale
     
     frontend_url: str = "http://localhost:5173"
     api_url: str = "http://localhost:8000"
@@ -29,12 +30,17 @@ class Settings(BaseSettings):
     cache_ttl: int = 300
     
     @property
+    def _ssl_param(self) -> str:
+        """Retorna parâmetro SSL para conexão (necessário para PlanetScale)"""
+        return "&ssl=true" if self.mysql_ssl else ""
+    
+    @property
     def database_url(self) -> str:
-        return f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4"
+        return f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4{self._ssl_param}"
     
     @property
     def async_database_url(self) -> str:
-        return f"mysql+asyncmy://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4"
+        return f"mysql+asyncmy://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4{self._ssl_param}"
     
     class Config:
         env_file = Path(__file__).resolve().parent.parent.parent / ".env"
