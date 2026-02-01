@@ -48,7 +48,7 @@
           <Badge variant="primary">{{ value }}</Badge>
         </template>
         <template #cell-cnpj="{ value }">
-          <span class="text-sm text-gray-600 dark:text-gray-400 font-mono">{{ value }}</span>
+          <span class="text-sm text-gray-600 dark:text-gray-400 font-mono">{{ formatCNPJ(value) }}</span>
         </template>
         <template #cell-razao_social="{ value }">
           <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ value }}</span>
@@ -140,6 +140,19 @@ const {
   prevPage,
   goToPage,
 } = useOperadoras();
+
+/**
+ * Formata CNPJ para o padrão XX.XXX.XXX/XXXX-XX
+ */
+function formatCNPJ(cnpj: string | null): string {
+  if (!cnpj) return '';
+  const cleaned = cnpj.replace(/\D/g, '');
+  if (cleaned.length !== 14) return cnpj;
+  return cleaned.replace(
+    /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+    '$1.$2.$3/$4-$5'
+  );
+}
 
 onMounted(() => {
   fetchOperadoras();
