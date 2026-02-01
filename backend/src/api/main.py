@@ -7,7 +7,7 @@ import logging
 
 from core.config import settings
 from infra.database import get_db, async_create_tables
-from api.routes import operadoras, analytics
+from api.routes import operadoras, analytics, logs
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -51,6 +51,7 @@ app.add_middleware(
 
 app.include_router(operadoras.router, prefix="/api/operadoras", tags=["operadoras"])
 app.include_router(analytics.router, prefix="/api/estatisticas", tags=["estatisticas"])
+app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
 
 
 @app.get("/")

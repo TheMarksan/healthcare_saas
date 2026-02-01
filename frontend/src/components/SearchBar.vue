@@ -6,7 +6,7 @@
         @input="onInput"
         @keyup.enter="emitSearch"
         type="text"
-        placeholder="Buscar por razão social..."
+        :placeholder="placeholder"
         class="w-full px-3 py-2 pr-10 rounded-lg border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
       />
       <div v-if="isSearching" class="absolute right-3 top-1/2 -translate-y-1/2">
@@ -31,7 +31,12 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from 'vue';
 
-const props = defineProps<{ modelValue?: string }>();
+const props = withDefaults(defineProps<{
+  modelValue?: string;
+  placeholder?: string;
+}>(), {
+  placeholder: 'Buscar...'
+});
 const emit = defineEmits(['update:modelValue', 'search']);
 
 const search = ref(props.modelValue || '');

@@ -3,7 +3,7 @@
     <select
       v-model="selectedUf"
       @change="$emit('update:uf', selectedUf)"
-      class="px-3 py-2 rounded-lg border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary transition-colors cursor-pointer"
+      class="w-56 px-3 py-2 rounded-lg border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary transition-colors cursor-pointer"
     >
       <option value="" class="dark:bg-gray-800">Todos os estados</option>
       <option v-for="uf in ufs" :key="uf" :value="uf" class="dark:bg-gray-800">{{ uf }}</option>

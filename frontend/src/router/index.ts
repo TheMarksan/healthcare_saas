@@ -24,6 +24,18 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/OperadoraDetailView.vue'),
     meta: { title: 'Detalhes da Operadora' },
   },
+  {
+    path: '/logs',
+    name: 'Logs',
+    component: () => import('@/views/LogsView.vue'),
+    meta: { title: 'Logs do Sistema' },
+  },
+  {
+    path: '/sobre',
+    name: 'Sobre',
+    component: () => import('@/views/SobreView.vue'),
+    meta: { title: 'Sobre' },
+  },
 ];
 
 const router = createRouter({

@@ -43,17 +43,6 @@
             </button>
           </router-link>
         </template>
-        
-        <!-- Logout in mobile menu -->
-        <button
-          :class="cn(
-            'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
-            'text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500'
-          )"
-        >
-          <LogOut class="w-5 h-5 flex-shrink-0" />
-          <span class="font-medium">Sair</span>
-        </button>
       </nav>
     </div>
   </transition>
@@ -122,21 +111,6 @@
         </router-link>
       </template>
     </nav>
-
-    <!-- Footer -->
-    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-gray-800">
-      <button
-        :class="cn(
-          'w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200',
-          'text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500'
-        )"
-      >
-        <LogOut class="w-5 h-5 flex-shrink-0" />
-        <transition name="slide-fade">
-          <span v-if="isOpen" class="truncate font-medium">Sair</span>
-        </transition>
-      </button>
-    </div>
   </aside>
 </template>
 
@@ -146,11 +120,12 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Building2,
-  LogOut,
   Pin,
   PinOff,
   Menu,
   X,
+  FileWarning,
+  Info,
 } from 'lucide-vue-next';
 
 const isOpen = ref(false);
@@ -160,6 +135,8 @@ const mobileMenuOpen = ref(false);
 const menuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
   { name: 'Operadoras', icon: Building2, route: '/operadoras' },
+  { name: 'Logs', icon: FileWarning, route: '/logs' },
+  { name: 'Sobre', icon: Info, route: '/sobre' },
 ];
 </script>
 
@@ -179,7 +156,7 @@ const menuItems = [
   .mobile-header {
     display: flex;
   }
-  
+
   .desktop-sidebar {
     display: none;
   }

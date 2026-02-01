@@ -27,7 +27,7 @@
           <div class="flex items-start justify-between">
             <div>
               <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total de Despesas</p>
-              <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p class="mt-2 sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {{ formatCurrency(estatisticas?.total_despesas || 0) }}
               </p>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -46,7 +46,7 @@
           <div class="flex items-start justify-between">
             <div>
               <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Média por Trimestre</p>
-              <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p class="mt-2 sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {{ formatCurrency(estatisticas?.media_geral || 0) }}
               </p>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -65,8 +65,8 @@
           <div class="flex items-start justify-between">
             <div>
               <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Acima da Média</p>
-              <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                {{ operadorasAcimaMedia?.total_operadoras || 0 }}
+              <p class="mt-2 sm:text-3xl font-bold text-gray-900 dark:text-white">
+                {{ filteredOperadorasAcimaMedia?.total_operadoras || 0 }}
               </p>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 em 2+ trimestres
@@ -131,6 +131,9 @@
             <Pie v-if="pieChartData" :data="pieChartData" :options="pieChartOptions" />
             <p v-else class="text-gray-500 dark:text-gray-400">Sem dados disponíveis</p>
           </div>
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 italic">
+            * "Sem UF" refere-se a operadoras sem cadastro completo na ANS.
+          </p>
         </Card>
       </div>
 
@@ -163,7 +166,7 @@
           <div class="h-[300px] overflow-y-auto">
             <div class="space-y-3">
               <div
-                v-for="(op, index) in (operadorasAcimaMedia?.operadoras || []).slice(0, 10)"
+                v-for="(op, index) in (filteredOperadorasAcimaMedia?.operadoras || []).slice(0, 10)"
                 :key="index"
                 class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
               >
@@ -180,7 +183,7 @@
                   <Badge variant="warning">{{ op.trimestres_acima_media }} trim</Badge>
                 </div>
               </div>
-              <p v-if="!operadorasAcimaMedia?.operadoras?.length" class="text-center text-gray-500 dark:text-gray-400 py-8">
+              <p v-if="!filteredOperadorasAcimaMedia?.operadoras?.length" class="text-center text-gray-500 dark:text-gray-400 py-8">
                 Nenhuma operadora encontrada
               </p>
             </div>
@@ -226,6 +229,9 @@
             </div>
           </div>
         </div>
+        <p class="mt-4 text-xs text-gray-500 dark:text-gray-400 italic">
+          * "Sem UF" refere-se a operadoras sem cadastro completo na ANS (placeholders).
+        </p>
       </Card>
     </div>
   </div>
@@ -252,7 +258,8 @@ const {
   estatisticas,
   topCrescimento,
   despesasPorUF,
-  operadorasAcimaMedia,
+  filteredOperadorasAcimaMedia,
+  filteredTopCrescimento,
   loading,
   selectedUF,
   availableUFs,
@@ -315,9 +322,9 @@ const pieChartOptions = computed(() => ({
 
 // Bar Chart Data - Top Growth
 const barChartData = computed(() => {
-  if (!topCrescimento.value.length) return null;
+  if (!filteredTopCrescimento.value.length) return null;
 
-  const data = topCrescimento.value.slice(0, 5);
+  const data = filteredTopCrescimento.value.slice(0, 5);
 
   return {
     labels: data.map(d => d.razao_social.substring(0, 20) + '...'),

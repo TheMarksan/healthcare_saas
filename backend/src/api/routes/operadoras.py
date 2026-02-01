@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
+from typing import Optional, List
 
 from infra.database import get_db
 from infra.repositories import OperadoraRepository, DespesaRepository
@@ -8,10 +8,16 @@ from domain.schemas import (
     OperadoraResponse,
     DespesaTrimestralResponse,
     OperadoraListResponse,
-    DespesaListResponse
 )
 
 router = APIRouter()
+
+
+@router.get("/modalidades", response_model=List[str])
+async def list_modalidades(db: AsyncSession = Depends(get_db)):
+    """Lista todas as modalidades de operadoras disponíveis"""
+    repo = OperadoraRepository(db)
+    return await repo.get_modalidades()
 
 
 @router.get("", response_model=OperadoraListResponse)
@@ -27,7 +33,7 @@ async def list_operadoras(
     repo = OperadoraRepository(db)
     
     operadoras = await repo.search(
-        razao_social=search,
+        search=search,
         uf=uf,
         modalidade=modalidade,
         cursor=cursor,
@@ -38,7 +44,7 @@ async def list_operadoras(
     if has_next:
         operadoras = operadoras[:limit]
     
-    total = await repo.count_filtered(razao_social=search, uf=uf, modalidade=modalidade)
+    total = await repo.count_filtered(search=search, uf=uf, modalidade=modalidade)
     # Cursor composto: razao_social|registro_ans para ordenação única
     next_cursor = f"{operadoras[-1].razao_social}|{operadoras[-1].registro_ans}" if has_next and operadoras else None
     
@@ -79,40 +85,3 @@ async def get_operadora_by_registro(
         "total_despesas": total_despesas,
         "media_despesas": media_despesas
     }
-
-
-@router.get("/{cnpj}", response_model=OperadoraResponse)
-async def get_operadora(
-    cnpj: str,
-    db: AsyncSession = Depends(get_db)
-):
-    repo = OperadoraRepository(db)
-    operadora = await repo.get_by_cnpj(cnpj)
-    
-    if not operadora:
-        raise HTTPException(status_code=404, detail="Operadora não encontrada")
-    
-    return OperadoraResponse.model_validate(operadora)
-
-
-@router.get("/{cnpj}/despesas", response_model=DespesaListResponse)
-async def get_despesas_operadora(
-    cnpj: str,
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db)
-):
-    repo = DespesaRepository(db)
-    skip = (page - 1) * limit
-    
-    despesas = await repo.get_by_cnpj(cnpj, skip=skip, limit=limit)
-    total = await repo.count_by_cnpj(cnpj)
-    
-    return DespesaListResponse(
-        data=[DespesaTrimestralResponse.model_validate(d) for d in despesas],
-        total=total,
-        page=page,
-        limit=limit,
-        has_next=(page * limit) < total,
-        has_prev=page > 1
-    )

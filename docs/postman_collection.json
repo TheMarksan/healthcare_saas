@@ -1,0 +1,838 @@
+{
+  "info": {
+    "_postman_id": "healthcare-saas-api-v2",
+    "name": "Healthcare SaaS API - ANS Operadoras",
+    "description": "API para análise de dados das operadoras de saúde ANS.\n\nEsta coleção contém todas as rotas disponíveis para consulta de operadoras, estatísticas analíticas e logs de monitoramento.\n\n**Base URL:** http://localhost:8000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Info",
+      "description": "Endpoints de saúde e informações da API",
+      "item": [
+        {
+          "name": "Root - Info da API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Retorna informações básicas da API"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/",
+                  "host": ["{{baseUrl}}"],
+                  "path": [""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Healthcare SaaS API\",\n  \"version\": \"1.0.0\",\n  \"environment\": \"development\",\n  \"docs\": \"/docs\",\n  \"health\": \"/health\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Verifica o status da API e conexão com o banco de dados"
+          },
+          "response": [
+            {
+              "name": "API Saudável",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"healthy\",\n  \"database\": \"healthy\",\n  \"timestamp\": \"2026-02-01T12:00:00.000000\"\n}"
+            },
+            {
+              "name": "Banco Indisponível",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"degraded\",\n  \"database\": \"unhealthy\",\n  \"timestamp\": \"2026-02-01T12:00:00.000000\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Operadoras",
+      "description": "Endpoints para consulta e listagem de operadoras de saúde",
+      "item": [
+        {
+          "name": "Listar Modalidades",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/operadoras/modalidades",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "operadoras", "modalidades"]
+            },
+            "description": "Lista todas as modalidades de operadoras disponíveis no banco de dados"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras/modalidades",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras", "modalidades"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  \"Administradora de Benefícios\",\n  \"Autogestão\",\n  \"Cooperativa Médica\",\n  \"Cooperativa Odontológica\",\n  \"Filantropia\",\n  \"Medicina de Grupo\",\n  \"Odontologia de Grupo\",\n  \"Seguradora Especializada em Saúde\"\n]"
+            }
+          ]
+        },
+        {
+          "name": "Listar Operadoras",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/operadoras?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "operadoras"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Número da página (>=1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Itens por página (1-100)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Busca por razão social ou CNPJ",
+                  "disabled": true
+                },
+                {
+                  "key": "uf",
+                  "value": "",
+                  "description": "Filtrar por UF (ex: SP, RJ)",
+                  "disabled": true
+                },
+                {
+                  "key": "modalidade",
+                  "value": "",
+                  "description": "Filtrar por modalidade (ex: Cooperativa Médica)",
+                  "disabled": true
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": "Cursor para keyset pagination (razao_social|registro_ans)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lista operadoras com paginação keyset. Suporta filtros por razão social, CNPJ, UF e modalidade."
+          },
+          "response": [
+            {
+              "name": "Sucesso - Primeira Página",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras?page=1&limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"registro_ans\": \"000001\",\n      \"cnpj\": \"12345678000190\",\n      \"razao_social\": \"ABC SAUDE LTDA\",\n      \"nome_fantasia\": \"ABC Saúde\",\n      \"modalidade\": \"Medicina de Grupo\",\n      \"uf\": \"SP\",\n      \"municipio\": \"São Paulo\",\n      \"created_at\": \"2025-01-15T10:30:00\",\n      \"updated_at\": \"2025-01-15T10:30:00\"\n    }\n  ],\n  \"total\": 1250,\n  \"page\": 1,\n  \"limit\": 10,\n  \"next_cursor\": \"ABC SAUDE LTDA|000001\",\n  \"has_next\": true,\n  \"has_prev\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar Operadoras - Com Filtros",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/operadoras?page=1&limit=10&search=unimed&uf=SP&modalidade=Cooperativa Médica",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "operadoras"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "unimed", "description": "Busca por razão social ou CNPJ" },
+                { "key": "uf", "value": "SP" },
+                { "key": "modalidade", "value": "Cooperativa Médica" }
+              ]
+            },
+            "description": "Exemplo de busca com múltiplos filtros aplicados"
+          },
+          "response": [
+            {
+              "name": "Sucesso - Filtrado",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras?page=1&limit=10&search=unimed&uf=SP&modalidade=Cooperativa Médica",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "search", "value": "unimed" },
+                    { "key": "uf", "value": "SP" },
+                    { "key": "modalidade", "value": "Cooperativa Médica" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 45,\n      \"registro_ans\": \"301337\",\n      \"cnpj\": \"44988925000190\",\n      \"razao_social\": \"UNIMED CAMPINAS COOPERATIVA DE TRABALHO MEDICO\",\n      \"nome_fantasia\": \"Unimed Campinas\",\n      \"modalidade\": \"Cooperativa Médica\",\n      \"uf\": \"SP\",\n      \"municipio\": \"Campinas\"\n    }\n  ],\n  \"total\": 35,\n  \"page\": 1,\n  \"limit\": 10,\n  \"next_cursor\": \"UNIMED CAMPINAS|301337\",\n  \"has_next\": true,\n  \"has_prev\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Buscar por CNPJ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/operadoras?search=44988925000190",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "operadoras"],
+              "query": [
+                { "key": "search", "value": "44988925000190", "description": "CNPJ com ou sem formatação" }
+              ]
+            },
+            "description": "Busca operadora pelo CNPJ. Aceita CNPJ com ou sem formatação (pontos, barras, hífens são removidos automaticamente)."
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras?search=44988925000190",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras"],
+                  "query": [
+                    { "key": "search", "value": "44988925000190" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 45,\n      \"registro_ans\": \"301337\",\n      \"cnpj\": \"44988925000190\",\n      \"razao_social\": \"UNIMED CAMPINAS COOPERATIVA DE TRABALHO MEDICO\",\n      \"modalidade\": \"Cooperativa Médica\",\n      \"uf\": \"SP\"\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"has_next\": false,\n  \"has_prev\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Detalhe da Operadora",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/operadoras/registro/301337",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "operadoras", "registro", "301337"]
+            },
+            "description": "Busca detalhes de uma operadora pelo registro ANS, incluindo histórico de despesas trimestrais"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras/registro/301337",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras", "registro", "301337"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"operadora\": {\n    \"id\": 45,\n    \"registro_ans\": \"301337\",\n    \"cnpj\": \"44988925000190\",\n    \"razao_social\": \"UNIMED CAMPINAS COOPERATIVA DE TRABALHO MEDICO\",\n    \"nome_fantasia\": \"Unimed Campinas\",\n    \"modalidade\": \"Cooperativa Médica\",\n    \"uf\": \"SP\",\n    \"municipio\": \"Campinas\"\n  },\n  \"despesas\": [\n    {\n      \"id\": 1234,\n      \"registro_ans\": \"301337\",\n      \"trimestre\": \"1T2025\",\n      \"valor_despesas\": 15000000.50,\n      \"data\": \"2025-01-01\"\n    },\n    {\n      \"id\": 1235,\n      \"registro_ans\": \"301337\",\n      \"trimestre\": \"2T2025\",\n      \"valor_despesas\": 16500000.75,\n      \"data\": \"2025-04-01\"\n    }\n  ],\n  \"total_despesas\": 31500001.25,\n  \"media_despesas\": 15750000.625\n}"
+            },
+            {
+              "name": "Não Encontrada",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/operadoras/registro/999999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "operadoras", "registro", "999999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Operadora não encontrada\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Estatísticas",
+      "description": "Endpoints analíticos para visualização de métricas e indicadores",
+      "item": [
+        {
+          "name": "Estatísticas Agregadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estatisticas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estatisticas"],
+              "query": [
+                {
+                  "key": "uf",
+                  "value": "",
+                  "description": "Filtrar por UF (opcional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retorna estatísticas agregadas do sistema incluindo totais, médias e distribuições. Resultados são cacheados por 5 minutos."
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"total_operadoras\": 1250,\n  \"total_despesas\": 45000000000.00,\n  \"media_despesas\": 36000000.00,\n  \"mediana_despesas\": 12500000.00,\n  \"operadoras_por_uf\": [\n    {\"uf\": \"SP\", \"quantidade\": 450},\n    {\"uf\": \"RJ\", \"quantidade\": 180},\n    {\"uf\": \"MG\", \"quantidade\": 150},\n    {\"uf\": \"RS\", \"quantidade\": 95},\n    {\"uf\": \"PR\", \"quantidade\": 85}\n  ],\n  \"despesas_por_uf\": [\n    {\"uf\": \"SP\", \"total_despesas\": 18000000000.00},\n    {\"uf\": \"RJ\", \"total_despesas\": 8500000000.00},\n    {\"uf\": \"MG\", \"total_despesas\": 5200000000.00}\n  ],\n  \"trimestres_disponiveis\": [\"1T2025\", \"2T2025\", \"3T2025\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Estatísticas por UF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estatisticas?uf=SP",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estatisticas"],
+              "query": [
+                { "key": "uf", "value": "SP" }
+              ]
+            },
+            "description": "Estatísticas filtradas por uma UF específica"
+          },
+          "response": [
+            {
+              "name": "Sucesso - Filtrado por UF",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas?uf=SP",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas"],
+                  "query": [
+                    { "key": "uf", "value": "SP" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"total_operadoras\": 450,\n  \"total_despesas\": 18000000000.00,\n  \"media_despesas\": 40000000.00,\n  \"mediana_despesas\": 15000000.00,\n  \"operadoras_por_uf\": [\n    {\"uf\": \"SP\", \"quantidade\": 450}\n  ],\n  \"despesas_por_uf\": [\n    {\"uf\": \"SP\", \"total_despesas\": 18000000000.00}\n  ],\n  \"trimestres_disponiveis\": [\"1T2025\", \"2T2025\", \"3T2025\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Top Ranking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estatisticas/top-ranking?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estatisticas", "top-ranking"],
+              "query": [
+                { "key": "limit", "value": "10", "description": "Quantidade de resultados (1-100)" }
+              ]
+            },
+            "description": "Retorna as operadoras com melhor ranking de métricas"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas/top-ranking?limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas", "top-ranking"],
+                  "query": [
+                    { "key": "limit", "value": "10" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"registro_ans\": \"326305\",\n    \"razao_social\": \"BRADESCO SAUDE S.A.\",\n    \"ranking_score\": 98.5,\n    \"total_despesas\": 5200000000.00,\n    \"crescimento_percentual\": 12.5\n  },\n  {\n    \"id\": 2,\n    \"registro_ans\": \"005711\",\n    \"razao_social\": \"SUL AMERICA CIA DE SEGURO SAUDE\",\n    \"ranking_score\": 95.2,\n    \"total_despesas\": 4800000000.00,\n    \"crescimento_percentual\": 8.3\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Alta Variabilidade",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estatisticas/alta-variabilidade?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estatisticas", "alta-variabilidade"],
+              "query": [
+                { "key": "limit", "value": "50", "description": "Quantidade de resultados (1-200)" }
+              ]
+            },
+            "description": "Retorna operadoras com alta variabilidade nas despesas trimestrais"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas/alta-variabilidade?limit=50",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas", "alta-variabilidade"],
+                  "query": [
+                    { "key": "limit", "value": "50" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 123,\n    \"registro_ans\": \"412589\",\n    \"razao_social\": \"OPERADORA XYZ SAUDE\",\n    \"coeficiente_variacao\": 45.2,\n    \"desvio_padrao\": 2500000.00,\n    \"media_despesas\": 5500000.00\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Top Crescimento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estatisticas/crescimento?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estatisticas", "crescimento"],
+              "query": [
+                { "key": "limit", "value": "5", "description": "Quantidade de resultados (1-20)" },
+                { "key": "uf", "value": "", "description": "Filtrar por UF (opcional)", "disabled": true }
+              ]
+            },
+            "description": "Retorna as operadoras com maior crescimento percentual de despesas"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas/crescimento?limit=5",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas", "crescimento"],
+                  "query": [
+                    { "key": "limit", "value": "5" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"registro_ans\": \"412589\",\n    \"razao_social\": \"OPERADORA CRESCIMENTO SAUDE\",\n    \"uf\": \"SP\",\n    \"crescimento_percentual\": 85.5,\n    \"despesa_inicial\": 5000000.00,\n    \"despesa_final\": 9275000.00\n  },\n  {\n    \"registro_ans\": \"325412\",\n    \"razao_social\": \"NOVA VIDA PLANOS DE SAUDE\",\n    \"uf\": \"RJ\",\n    \"crescimento_percentual\": 72.3,\n    \"despesa_inicial\": 3200000.00,\n    \"despesa_final\": 5513600.00\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Despesas por UF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estatisticas/despesas-por-uf?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estatisticas", "despesas-por-uf"],
+              "query": [
+                { "key": "limit", "value": "5", "description": "Quantidade de UFs a retornar (1-27)" }
+              ]
+            },
+            "description": "Retorna total de despesas agrupado por UF, ordenado do maior para menor"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas/despesas-por-uf?limit=5",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas", "despesas-por-uf"],
+                  "query": [
+                    { "key": "limit", "value": "5" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"uf\": \"SP\",\n    \"total_despesas\": 18000000000.00,\n    \"quantidade_operadoras\": 450\n  },\n  {\n    \"uf\": \"RJ\",\n    \"total_despesas\": 8500000000.00,\n    \"quantidade_operadoras\": 180\n  },\n  {\n    \"uf\": \"MG\",\n    \"total_despesas\": 5200000000.00,\n    \"quantidade_operadoras\": 150\n  },\n  {\n    \"uf\": \"RS\",\n    \"total_despesas\": 3100000000.00,\n    \"quantidade_operadoras\": 95\n  },\n  {\n    \"uf\": \"PR\",\n    \"total_despesas\": 2800000000.00,\n    \"quantidade_operadoras\": 85\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Operadoras Acima da Média",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/estatisticas/acima-media?min_trimestres=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estatisticas", "acima-media"],
+              "query": [
+                { "key": "min_trimestres", "value": "2", "description": "Mínimo de trimestres para considerar (1-4)" },
+                { "key": "uf", "value": "", "description": "Filtrar por UF (opcional)", "disabled": true }
+              ]
+            },
+            "description": "Retorna operadoras com despesas consistentemente acima da média"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/estatisticas/acima-media?min_trimestres=2",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "estatisticas", "acima-media"],
+                  "query": [
+                    { "key": "min_trimestres", "value": "2" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"total_operadoras\": 125,\n  \"operadoras\": [\n    {\n      \"registro_ans\": \"326305\",\n      \"razao_social\": \"BRADESCO SAUDE S.A.\",\n      \"uf\": \"SP\",\n      \"media_despesas\": 1733333333.33,\n      \"trimestres_acima_media\": 3\n    },\n    {\n      \"registro_ans\": \"005711\",\n      \"razao_social\": \"SUL AMERICA CIA DE SEGURO SAUDE\",\n      \"uf\": \"SP\",\n      \"media_despesas\": 1600000000.00,\n      \"trimestres_acima_media\": 3\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Logs & Monitoramento",
+      "description": "Endpoints para monitoramento de qualidade dos dados",
+      "item": [
+        {
+          "name": "Resumo de Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "logs"]
+            },
+            "description": "Retorna contagem resumida de todos os tipos de logs disponíveis"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/logs",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "logs"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"unmatched_operadoras\": 45,\n  \"sem_despesas\": 230\n}"
+            }
+          ]
+        },
+        {
+          "name": "Operadoras Sem Match (Unmatched)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/logs/unmatched?limit=50&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "logs", "unmatched"],
+              "query": [
+                { "key": "limit", "value": "50", "description": "Itens por página (1-500)" },
+                { "key": "offset", "value": "0", "description": "Offset para paginação" }
+              ]
+            },
+            "description": "Lista operadoras que não foram encontradas no cadastro ANS durante a importação. Estas foram criadas como placeholder."
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/logs/unmatched?limit=50&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "logs", "unmatched"],
+                  "query": [
+                    { "key": "limit", "value": "50" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"registro_ans\": \"999001\",\n      \"quantidade_registros\": 15,\n      \"razao_social\": \"OPERADORA NAO ENCONTRADA - 999001\",\n      \"tipo\": \"unmatched\",\n      \"descricao\": \"Operadora não encontrada no cadastro ANS\"\n    },\n    {\n      \"registro_ans\": \"999002\",\n      \"quantidade_registros\": 8,\n      \"razao_social\": \"OPERADORA NAO ENCONTRADA - 999002\",\n      \"tipo\": \"unmatched\",\n      \"descricao\": \"Operadora não encontrada no cadastro ANS\"\n    }\n  ],\n  \"total\": 45,\n  \"limit\": 50,\n  \"offset\": 0,\n  \"has_next\": false,\n  \"has_prev\": false\n}"
+            },
+            {
+              "name": "Arquivo Não Encontrado",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/logs/unmatched",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "logs", "unmatched"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [],\n  \"total\": 0,\n  \"message\": \"Arquivo de log não encontrado\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Operadoras Sem Despesas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/logs/sem-despesas?limit=50&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "logs", "sem-despesas"],
+              "query": [
+                { "key": "limit", "value": "50", "description": "Itens por página (1-500)" },
+                { "key": "offset", "value": "0", "description": "Offset para paginação" }
+              ]
+            },
+            "description": "Lista operadoras cadastradas que não possuem nenhum registro de despesa trimestral"
+          },
+          "response": [
+            {
+              "name": "Sucesso",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/logs/sem-despesas?limit=50&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "logs", "sem-despesas"],
+                  "query": [
+                    { "key": "limit", "value": "50" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1234,\n      \"registro_ans\": \"412589\",\n      \"razao_social\": \"OPERADORA SEM MOVIMENTACAO LTDA\",\n      \"cnpj\": \"12345678000199\",\n      \"uf\": \"SP\",\n      \"modalidade\": \"Medicina de Grupo\",\n      \"tipo\": \"sem_despesas\",\n      \"descricao\": \"Nenhum registro de despesa encontrado\"\n    }\n  ],\n  \"total\": 230,\n  \"limit\": 50,\n  \"offset\": 0,\n  \"has_next\": true,\n  \"has_prev\": false\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

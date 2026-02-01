@@ -25,10 +25,12 @@ class AnalyticsService:
         row = result.fetchone()
         
         top_ufs_query = text(f"""
-            SELECT uf, SUM(valor_despesas) AS total
+            SELECT 
+                CASE WHEN uf IS NULL OR uf = '' THEN 'Sem UF*' ELSE uf END AS uf, 
+                SUM(valor_despesas) AS total
             FROM despesas_trimestrais
-            WHERE uf IS NOT NULL AND uf != '' {uf_filter}
-            GROUP BY uf
+            WHERE 1=1 {uf_filter}
+            GROUP BY CASE WHEN uf IS NULL OR uf = '' THEN 'Sem UF*' ELSE uf END
             ORDER BY total DESC
             LIMIT 5
         """)
@@ -120,12 +122,12 @@ class AnalyticsService:
         query = text("""
             WITH despesas_uf AS (
                 SELECT 
-                    uf,
+                    CASE WHEN uf IS NULL OR uf = '' THEN 'Sem UF*' ELSE uf END AS uf,
                     SUM(valor_despesas) AS total_despesas,
                     COUNT(DISTINCT razao_social) AS total_operadoras
                 FROM despesas_trimestrais
-                WHERE uf IS NOT NULL AND valor_despesas > 0
-                GROUP BY uf
+                WHERE valor_despesas > 0
+                GROUP BY CASE WHEN uf IS NULL OR uf = '' THEN 'Sem UF*' ELSE uf END
             ),
             total_geral AS (
                 SELECT SUM(total_despesas) AS total FROM despesas_uf

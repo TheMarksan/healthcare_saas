@@ -31,6 +31,7 @@ export function useOperadoras() {
   const loading = ref(false);
   const search = ref('');
   const uf = ref('');
+  const modalidade = ref('');
   const nextCursor = ref<string | null>(null);
   const cursorCache = ref<Map<number, string>>(new Map()); // Cache cursors by page number
 
@@ -39,6 +40,7 @@ export function useOperadoras() {
     pageSize = 10,
     searchValue = search.value,
     ufValue = uf.value,
+    modalidadeValue = modalidade.value,
     cursor = null,
     reset = false,
   }: {
@@ -46,6 +48,7 @@ export function useOperadoras() {
     pageSize?: number;
     searchValue?: string;
     ufValue?: string;
+    modalidadeValue?: string;
     cursor?: string | null;
     reset?: boolean;
   } = {}) {
@@ -57,6 +60,7 @@ export function useOperadoras() {
       });
       if (searchValue) params.append('search', searchValue);
       if (ufValue) params.append('uf', ufValue);
+      if (modalidadeValue) params.append('modalidade', modalidadeValue);
       if (cursor) params.append('cursor', cursor);
 
       const res = await fetch(`/api/operadoras?${params.toString()}`);
@@ -88,12 +92,17 @@ export function useOperadoras() {
 
   function setSearch(val: string) {
     search.value = val;
-    fetchOperadoras({ pageNum: 1, pageSize: limit.value, searchValue: val, ufValue: uf.value, reset: true });
+    fetchOperadoras({ pageNum: 1, pageSize: limit.value, searchValue: val, ufValue: uf.value, modalidadeValue: modalidade.value, reset: true });
   }
 
   function setUf(val: string) {
     uf.value = val;
-    fetchOperadoras({ pageNum: 1, pageSize: limit.value, searchValue: search.value, ufValue: val || '', reset: true });
+    fetchOperadoras({ pageNum: 1, pageSize: limit.value, searchValue: search.value, ufValue: val || '', modalidadeValue: modalidade.value, reset: true });
+  }
+
+  function setModalidade(val: string) {
+    modalidade.value = val;
+    fetchOperadoras({ pageNum: 1, pageSize: limit.value, searchValue: search.value, ufValue: uf.value, modalidadeValue: val || '', reset: true });
   }
 
   function nextPage() {
@@ -104,6 +113,7 @@ export function useOperadoras() {
         pageSize: limit.value,
         searchValue: search.value,
         ufValue: uf.value,
+        modalidadeValue: modalidade.value,
         cursor: cursor,
       });
     }
@@ -128,6 +138,7 @@ export function useOperadoras() {
         pageSize: limit.value,
         searchValue: search.value,
         ufValue: uf.value,
+        modalidadeValue: modalidade.value,
         cursor: null,
       });
     } else {
@@ -139,6 +150,7 @@ export function useOperadoras() {
           pageSize: limit.value,
           searchValue: search.value,
           ufValue: uf.value,
+          modalidadeValue: modalidade.value,
           cursor: cachedCursor,
         });
       } else {
@@ -161,6 +173,7 @@ export function useOperadoras() {
         });
         if (search.value) params.append('search', search.value);
         if (uf.value) params.append('uf', uf.value);
+        if (modalidade.value) params.append('modalidade', modalidade.value);
         if (cursor) params.append('cursor', cursor);
 
         const res = await fetch(`/api/operadoras?${params.toString()}`);
@@ -197,9 +210,11 @@ export function useOperadoras() {
     loading,
     search,
     uf,
+    modalidade,
     fetchOperadoras,
     setSearch,
     setUf,
+    setModalidade,
     nextPage,
     prevPage,
     goToPage,

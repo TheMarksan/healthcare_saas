@@ -18,7 +18,13 @@
     <!-- Filters Card -->
     <Card class="mb-6">
       <div class="flex flex-wrap gap-4 items-center">
-        <SearchBar :model-value="search" @search="setSearch" class="flex-1 min-w-[250px]" />
+        <SearchBar
+          :model-value="search"
+          @search="setSearch"
+          class="flex-1 min-w-[250px]"
+          placeholder="Buscar por razão social ou CNPJ..."
+        />
+        <ModalidadeSelect :model-value="modalidade" @update:modalidade="setModalidade" />
         <UFSelect :model-value="uf" @update:uf="setUf" />
       </div>
     </Card>
@@ -97,6 +103,7 @@ import { useOperadoras } from '@/composables/useOperadoras';
 import { Card, Badge } from '@/components/ui';
 import SearchBar from '@/components/SearchBar.vue';
 import UFSelect from '@/components/UFSelect.vue';
+import ModalidadeSelect from '@/components/ModalidadeSelect.vue';
 import DataTable from '@/components/DataTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
@@ -124,9 +131,11 @@ const {
   loading,
   search,
   uf,
+  modalidade,
   fetchOperadoras,
   setSearch,
   setUf,
+  setModalidade,
   nextPage,
   prevPage,
   goToPage,

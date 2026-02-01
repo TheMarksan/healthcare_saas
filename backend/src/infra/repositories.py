@@ -41,7 +41,7 @@ class OperadoraRepository:
     
     async def search(
         self, 
-        razao_social: Optional[str] = None,
+        search: Optional[str] = None,
         uf: Optional[str] = None,
         modalidade: Optional[str] = None,
         cursor: Optional[str] = None,
@@ -49,8 +49,13 @@ class OperadoraRepository:
     ) -> list[Operadora]:
         query = select(Operadora)
         
-        if razao_social:
-            query = query.where(Operadora.razao_social.ilike(f"%{razao_social}%"))
+        if search:
+            # Busca por razão social ou CNPJ
+            clean_search = search.replace(".", "").replace("/", "").replace("-", "")
+            query = query.where(
+                (Operadora.razao_social.ilike(f"%{search}%")) |
+                (Operadora.cnpj.ilike(f"%{clean_search}%"))
+            )
         if uf:
             query = query.where(Operadora.uf == uf)
         if modalidade:
@@ -71,14 +76,19 @@ class OperadoraRepository:
     
     async def count_filtered(
         self,
-        razao_social: Optional[str] = None,
+        search: Optional[str] = None,
         uf: Optional[str] = None,
         modalidade: Optional[str] = None
     ) -> int:
         query = select(func.count(Operadora.id))
         
-        if razao_social:
-            query = query.where(Operadora.razao_social.ilike(f"%{razao_social}%"))
+        if search:
+            # Busca por razão social ou CNPJ
+            clean_search = search.replace(".", "").replace("/", "").replace("-", "")
+            query = query.where(
+                (Operadora.razao_social.ilike(f"%{search}%")) |
+                (Operadora.cnpj.ilike(f"%{clean_search}%"))
+            )
         if uf:
             query = query.where(Operadora.uf == uf)
         if modalidade:
@@ -86,6 +96,17 @@ class OperadoraRepository:
         
         result = await self.session.execute(query)
         return result.scalar_one()
+    
+    async def get_modalidades(self) -> list[str]:
+        """Retorna lista de modalidades distintas"""
+        result = await self.session.execute(
+            select(Operadora.modalidade)
+            .where(Operadora.modalidade.isnot(None))
+            .where(Operadora.modalidade != '')
+            .distinct()
+            .order_by(Operadora.modalidade)
+        )
+        return [row[0] for row in result.all()]
 
 
 class DespesaRepository:
@@ -106,30 +127,6 @@ class DespesaRepository:
             .limit(limit)
         )
         return list(result.scalars().all())
-    
-    async def get_by_cnpj(
-        self, 
-        cnpj: str,
-        skip: int = 0,
-        limit: int = 100
-    ) -> list[DespesaTrimestral]:
-        clean_cnpj = cnpj.replace(".", "").replace("/", "").replace("-", "")
-        result = await self.session.execute(
-            select(DespesaTrimestral)
-            .where(DespesaTrimestral.cnpj == clean_cnpj)
-            .order_by(DespesaTrimestral.ano.desc(), DespesaTrimestral.trimestre.desc())
-            .offset(skip)
-            .limit(limit)
-        )
-        return list(result.scalars().all())
-    
-    async def count_by_cnpj(self, cnpj: str) -> int:
-        clean_cnpj = cnpj.replace(".", "").replace("/", "").replace("-", "")
-        result = await self.session.execute(
-            select(func.count(DespesaTrimestral.id))
-            .where(DespesaTrimestral.cnpj == clean_cnpj)
-        )
-        return result.scalar_one()
     
     async def get_by_uf(
         self,

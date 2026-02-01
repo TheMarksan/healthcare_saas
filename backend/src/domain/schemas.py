@@ -122,15 +122,6 @@ class OperadoraListResponse(BaseModel):
     has_prev: bool
 
 
-class DespesaListResponse(BaseModel):
-    data: List[DespesaTrimestralResponse]
-    total: int
-    page: int
-    limit: int
-    has_next: bool
-    has_prev: bool
-
-
 class EstatisticasResponse(BaseModel):
     total_operadoras: int
     total_despesas: float
