@@ -77,7 +77,7 @@ describe('useOperadoras', () => {
         modalidadeValue: 'Cooperativa Médica',
       });
 
-      const fetchUrl = mockFetch.mock.calls[0][0] as string;
+      const fetchUrl = mockFetch.mock.calls[0]?.[0] as string;
       expect(fetchUrl).toContain('search=unimed');
       expect(fetchUrl).toContain('uf=SP');
       expect(fetchUrl).toContain('modalidade=Cooperativa');
@@ -95,7 +95,7 @@ describe('useOperadoras', () => {
         cursor: 'TESTE|123456',
       });
 
-      const fetchUrl = mockFetch.mock.calls[0][0] as string;
+      const fetchUrl = mockFetch.mock.calls[0]?.[0] as string;
       expect(fetchUrl).toContain('cursor=TESTE');
     });
 
@@ -168,7 +168,7 @@ describe('useOperadoras', () => {
 
       await nextTick();
 
-      const fetchUrl = mockFetch.mock.calls[0][0] as string;
+      const fetchUrl = mockFetch.mock.calls[0]?.[0] as string;
       expect(fetchUrl).toContain('page=1');
     });
   });

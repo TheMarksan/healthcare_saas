@@ -139,7 +139,7 @@ describe('Pagination', () => {
         return /^\d+$/.test(text) && text !== '1';
       });
 
-      if (pageButtons.length > 0) {
+      if (pageButtons.length > 0 && pageButtons[0]) {
         await pageButtons[0].trigger('click');
         // O componente emite 'goToPage' (camelCase)
         expect(wrapper.emitted('goToPage')).toBeTruthy();
