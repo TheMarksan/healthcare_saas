@@ -104,17 +104,17 @@ describe('Badge', () => {
       expect(wrapper.html()).toContain('OK');
     });
 
-    it('deve aplicar variant outline', () => {
+    it('deve aplicar variant warning', () => {
       const wrapper = mount(Badge, {
         props: {
-          variant: 'outline',
+          variant: 'warning',
         },
         slots: {
-          default: 'Outline',
+          default: 'Warning',
         },
       });
 
-      expect(wrapper.html()).toContain('Outline');
+      expect(wrapper.html()).toContain('Warning');
     });
   });
 
