@@ -5,7 +5,7 @@ from sqlalchemy import text
 from contextlib import asynccontextmanager
 import logging
 
-from core.config import settings
+from core.config import settings, Environment
 from infra.database import get_db, async_create_tables
 from api.routes import operadoras, analytics, logs
 
@@ -36,14 +36,22 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Configurar origens CORS permitidas
+allowed_origins = [
+    settings.frontend_url,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+]
+
+# Em produção, permitir qualquer subdomínio do Vercel
+if settings.environment == Environment.PRODUCTION:
+    allowed_origins.append("https://*.vercel.app")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.frontend_url,
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-    ],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Permite qualquer deploy do Vercel
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
