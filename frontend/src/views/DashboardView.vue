@@ -19,6 +19,15 @@
     <!-- Loading State -->
     <LoadingSpinner v-if="loading" message="Carregando estatísticas..." />
 
+    <!-- Error State -->
+    <Card v-else-if="error">
+      <ErrorState
+        :type="errorType || 'generic'"
+        :details="error"
+        @retry="fetchAll()"
+      />
+    </Card>
+
     <div v-else class="space-y-6">
       <!-- Highlight Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -247,6 +256,7 @@ import { useTheme } from '@/composables/useTheme';
 import { Card, Badge, Select } from '@/components/ui';
 import PageHeader from '@/components/PageHeader.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import ErrorState from '@/components/ErrorState.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 
 // Register Chart.js components
@@ -261,6 +271,8 @@ const {
   filteredOperadorasAcimaMedia,
   filteredTopCrescimento,
   loading,
+  error,
+  errorType,
   selectedUF,
   availableUFs,
   formatCurrency,

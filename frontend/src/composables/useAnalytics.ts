@@ -45,6 +45,7 @@ export function useAnalytics() {
   const operadorasAcimaMedia = ref<{ total_operadoras: number; operadoras: OperadoraAcimaMedia[] } | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const errorType = ref<'network' | 'server' | 'not-found' | 'generic' | null>(null);
   const selectedUF = ref<string>('');
 
   const formatCurrency = (value: number): string => {
@@ -68,11 +69,24 @@ export function useAnalytics() {
     try {
       loading.value = true;
       error.value = null;
+      errorType.value = null;
       const params = uf ? `?uf=${encodeURIComponent(uf)}` : '';
       const response = await fetch(`${API_BASE}/estatisticas${params}`);
-      if (!response.ok) throw new Error('Erro ao buscar estatísticas');
+      if (!response.ok) {
+        if (response.status >= 500) {
+          errorType.value = 'server';
+        } else if (response.status === 404) {
+          errorType.value = 'not-found';
+        } else {
+          errorType.value = 'generic';
+        }
+        throw new Error('Erro ao buscar estatísticas');
+      }
       estatisticas.value = await response.json();
     } catch (e) {
+      if (!errorType.value) {
+        errorType.value = 'network';
+      }
       error.value = e instanceof Error ? e.message : 'Erro desconhecido';
       console.error('Erro ao buscar estatísticas:', e);
     } finally {
@@ -166,6 +180,7 @@ export function useAnalytics() {
     operadorasAcimaMedia,
     loading,
     error,
+    errorType,
     selectedUF,
     availableUFs,
     filteredTopCrescimento,

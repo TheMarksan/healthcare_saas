@@ -75,6 +75,14 @@
         <LoadingSpinner :message="`Carregando ${tabConfig[activeTab].title.toLowerCase()}...`" />
       </div>
 
+      <!-- Error State -->
+      <ErrorState
+        v-else-if="error"
+        :type="errorType || 'generic'"
+        :details="error"
+        @retry="fetchTabData(activeTab)"
+      />
+
       <!-- Data Table -->
       <div v-else class="overflow-x-auto">
         <table class="w-full">
@@ -169,9 +177,11 @@ import { Card, Badge, Button } from '@/components/ui';
 import PageHeader from '@/components/PageHeader.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import ErrorState from '@/components/ErrorState.vue';
 import { AlertTriangle, FileX } from 'lucide-vue-next';
 
 type TabType = 'unmatched' | 'sem-despesas';
+type ErrorType = 'network' | 'server' | 'not-found' | 'generic';
 
 interface LogItem {
   registro_ans: string;
@@ -193,6 +203,8 @@ interface LogResponse {
 
 const activeTab = ref<TabType>('unmatched');
 const loading = ref(false);
+const error = ref<string | null>(null);
+const errorType = ref<ErrorType | null>(null);
 const offset = ref(0);
 const limit = 50;
 
@@ -230,19 +242,34 @@ const tabConfig = {
 async function fetchSummary() {
   try {
     const response = await fetch('/api/logs');
+    if (!response.ok) throw new Error('Erro ao carregar resumo');
     const data = await response.json();
     summary.unmatched = data.unmatched_operadoras || 0;
     summary.semDespesas = data.sem_despesas || 0;
-  } catch (error) {
-    console.error('Erro ao carregar resumo:', error);
+  } catch (err) {
+    console.error('Erro ao carregar resumo:', err);
   }
 }
 
 async function fetchTabData(tab: TabType, newOffset = 0) {
   loading.value = true;
+  error.value = null;
+  errorType.value = null;
   try {
     const config = tabConfig[tab];
     const response = await fetch(`${config.endpoint}?limit=${limit}&offset=${newOffset}`);
+
+    if (!response.ok) {
+      if (response.status >= 500) {
+        errorType.value = 'server';
+      } else if (response.status === 404) {
+        errorType.value = 'not-found';
+      } else {
+        errorType.value = 'generic';
+      }
+      throw new Error(`Erro ${response.status}`);
+    }
+
     const data: LogResponse = await response.json();
     dataCache[tab] = data;
     offset.value = newOffset;
@@ -250,8 +277,12 @@ async function fetchTabData(tab: TabType, newOffset = 0) {
     // Update summary with actual totals
     if (tab === 'unmatched') summary.unmatched = data.total;
     if (tab === 'sem-despesas') summary.semDespesas = data.total;
-  } catch (error) {
-    console.error(`Erro ao carregar ${tab}:`, error);
+  } catch (err) {
+    if (!errorType.value) {
+      errorType.value = 'network';
+    }
+    error.value = err instanceof Error ? err.message : 'Erro ao carregar dados';
+    console.error(`Erro ao carregar ${tab}:`, err);
   } finally {
     loading.value = false;
   }

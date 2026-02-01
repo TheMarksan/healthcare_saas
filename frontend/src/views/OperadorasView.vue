@@ -34,6 +34,15 @@
       <LoadingSpinner message="Carregando operadoras..." />
     </Card>
 
+    <!-- Error State -->
+    <Card v-else-if="error">
+      <ErrorState
+        :type="errorType || 'generic'"
+        :details="error"
+        @retry="fetchOperadoras()"
+      />
+    </Card>
+
     <!-- Data Table -->
     <Card v-else noPadding>
       <DataTable
@@ -107,6 +116,7 @@ import ModalidadeSelect from '@/components/ModalidadeSelect.vue';
 import DataTable from '@/components/DataTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import ErrorState from '@/components/ErrorState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 
@@ -129,6 +139,8 @@ const {
   hasNext,
   hasPrev,
   loading,
+  error,
+  errorType,
   search,
   uf,
   modalidade,

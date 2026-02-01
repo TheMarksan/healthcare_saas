@@ -29,6 +29,8 @@ export function useOperadoras() {
   const hasNext = ref(false);
   const hasPrev = ref(false);
   const loading = ref(false);
+  const error = ref<string | null>(null);
+  const errorType = ref<'network' | 'server' | 'not-found' | 'generic' | null>(null);
   const search = ref('');
   const uf = ref('');
   const modalidade = ref('');
@@ -53,6 +55,8 @@ export function useOperadoras() {
     reset?: boolean;
   } = {}) {
     loading.value = true;
+    error.value = null;
+    errorType.value = null;
     try {
       const params = new URLSearchParams({
         page: String(pageNum),
@@ -64,6 +68,20 @@ export function useOperadoras() {
       if (cursor) params.append('cursor', cursor);
 
       const res = await fetch(`/api/operadoras?${params.toString()}`);
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          errorType.value = 'not-found';
+          throw new Error('Recurso não encontrado');
+        } else if (res.status >= 500) {
+          errorType.value = 'server';
+          throw new Error('Erro no servidor');
+        } else {
+          errorType.value = 'generic';
+          throw new Error(`Erro ${res.status}`);
+        }
+      }
+
       const data: OperadoraListResponse = await res.json();
 
       operadoras.value = data.data;
@@ -85,6 +103,12 @@ export function useOperadoras() {
           cursorCache.value.set(2, data.next_cursor);
         }
       }
+    } catch (e) {
+      if (!errorType.value) {
+        errorType.value = 'network';
+      }
+      error.value = e instanceof Error ? e.message : 'Erro ao carregar operadoras';
+      console.error('Erro ao buscar operadoras:', e);
     } finally {
       loading.value = false;
     }
@@ -208,6 +232,8 @@ export function useOperadoras() {
     hasNext,
     hasPrev,
     loading,
+    error,
+    errorType,
     search,
     uf,
     modalidade,

@@ -34,16 +34,15 @@
     </Card>
 
     <!-- Error State -->
-    <Card v-else-if="error" class="text-center py-12">
-      <div class="text-red-500 dark:text-red-400 mb-4">
-        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      </div>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Erro ao carregar</h3>
-      <p class="text-gray-600 dark:text-gray-400 mb-4">{{ error }}</p>
-      <Button @click="fetchData">Tentar novamente</Button>
+    <Card v-else-if="error">
+      <ErrorState
+        :type="errorType || 'generic'"
+        :title="errorType === 'not-found' ? 'Operadora não encontrada' : undefined"
+        :message="errorType === 'not-found' ? 'A operadora solicitada não existe ou foi removida do sistema.' : undefined"
+        :details="error"
+        :show-home="true"
+        @retry="fetchData"
+      />
     </Card>
 
     <!-- Content -->
@@ -194,8 +193,11 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { Card, Badge, Button } from '@/components/ui';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import ErrorState from '@/components/ErrorState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
+
+type ErrorType = 'network' | 'server' | 'not-found' | 'generic';
 
 interface Operadora {
   id: number;
@@ -222,6 +224,7 @@ const totalDespesas = ref(0);
 const mediaDespesas = ref(0);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const errorType = ref<ErrorType | null>(null);
 
 const sortedDespesas = computed(() => {
   return [...despesas.value].sort((a, b) => {
@@ -269,15 +272,22 @@ async function fetchData() {
 
   loading.value = true;
   error.value = null;
+  errorType.value = null;
 
   try {
     const response = await fetch(`/api/operadoras/registro/${registroAns}`);
 
     if (!response.ok) {
       if (response.status === 404) {
+        errorType.value = 'not-found';
         throw new Error('Operadora não encontrada');
+      } else if (response.status >= 500) {
+        errorType.value = 'server';
+        throw new Error('Erro no servidor');
+      } else {
+        errorType.value = 'generic';
+        throw new Error('Erro ao carregar dados da operadora');
       }
-      throw new Error('Erro ao carregar dados da operadora');
     }
 
     const data = await response.json();
@@ -287,6 +297,9 @@ async function fetchData() {
     totalDespesas.value = data.total_despesas;
     mediaDespesas.value = data.media_despesas;
   } catch (err) {
+    if (!errorType.value) {
+      errorType.value = 'network';
+    }
     error.value = err instanceof Error ? err.message : 'Erro desconhecido';
   } finally {
     loading.value = false;

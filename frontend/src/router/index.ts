@@ -36,6 +36,24 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/SobreView.vue'),
     meta: { title: 'Sobre' },
   },
+  {
+    path: '/erro',
+    name: 'Error',
+    component: () => import('@/views/ErrorView.vue'),
+    meta: { title: 'Erro' },
+  },
+  {
+    path: '/sem-conexao',
+    name: 'ConnectionError',
+    component: () => import('@/views/ConnectionErrorView.vue'),
+    meta: { title: 'Sem Conexão' },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/NotFoundView.vue'),
+    meta: { title: 'Página não encontrada' },
+  },
 ];
 
 const router = createRouter({
