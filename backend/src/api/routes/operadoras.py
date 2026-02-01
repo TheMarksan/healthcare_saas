@@ -18,7 +18,7 @@ router = APIRouter()
 async def list_operadoras(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    cursor: Optional[str] = Query(None, description="CNPJ cursor para keyset pagination"),
+    cursor: Optional[str] = Query(None, description="razao_social|registro_ans cursor para keyset pagination"),
     search: Optional[str] = None,
     uf: Optional[str] = None,
     modalidade: Optional[str] = None,
@@ -39,7 +39,8 @@ async def list_operadoras(
         operadoras = operadoras[:limit]
     
     total = await repo.count_filtered(razao_social=search, uf=uf, modalidade=modalidade)
-    next_cursor = operadoras[-1].cnpj if has_next and operadoras else None
+    # Cursor composto: razao_social|registro_ans para ordenação única
+    next_cursor = f"{operadoras[-1].razao_social}|{operadoras[-1].registro_ans}" if has_next and operadoras else None
     
     return OperadoraListResponse(
         data=[OperadoraResponse.model_validate(op) for op in operadoras],
@@ -50,6 +51,34 @@ async def list_operadoras(
         has_next=has_next,
         has_prev=cursor is not None
     )
+
+
+@router.get("/registro/{registro_ans}")
+async def get_operadora_by_registro(
+    registro_ans: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Busca operadora pelo registro ANS com histórico de despesas"""
+    repo = OperadoraRepository(db)
+    operadora = await repo.get_by_registro_ans(registro_ans)
+    
+    if not operadora:
+        raise HTTPException(status_code=404, detail="Operadora não encontrada")
+    
+    # Buscar despesas da operadora
+    despesa_repo = DespesaRepository(db)
+    despesas = await despesa_repo.get_by_operadora(registro_ans, limit=20)
+    
+    # Calcular total e média
+    total_despesas = sum(float(d.valor_despesas) for d in despesas)
+    media_despesas = total_despesas / len(despesas) if despesas else 0
+    
+    return {
+        "operadora": OperadoraResponse.model_validate(operadora),
+        "despesas": [DespesaTrimestralResponse.model_validate(d) for d in despesas],
+        "total_despesas": total_despesas,
+        "media_despesas": media_despesas
+    }
 
 
 @router.get("/{cnpj}", response_model=OperadoraResponse)

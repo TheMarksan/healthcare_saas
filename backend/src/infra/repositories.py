@@ -56,9 +56,16 @@ class OperadoraRepository:
         if modalidade:
             query = query.where(Operadora.modalidade == modalidade)
         if cursor:
-            query = query.where(Operadora.cnpj > cursor)
+            # Cursor format: "razao_social|registro_ans" for unique pagination
+            parts = cursor.split('|')
+            if len(parts) == 2:
+                cursor_razao, cursor_reg = parts
+                query = query.where(
+                    (Operadora.razao_social > cursor_razao) |
+                    ((Operadora.razao_social == cursor_razao) & (Operadora.registro_ans > cursor_reg))
+                )
         
-        query = query.order_by(Operadora.cnpj).limit(limit + 1)
+        query = query.order_by(Operadora.razao_social, Operadora.registro_ans).limit(limit + 1)
         result = await self.session.execute(query)
         return list(result.scalars().all())
     

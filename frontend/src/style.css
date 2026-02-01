@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #9663C4;
+  --color-secondary: #E0CAFB;
+  --color-primary-dark: #7B4FA8;
+  --color-secondary-dark: #3D2B5C;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Dark mode base styles */
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+/* Disable transitions during view transition */
+::view-transition-old(root),
+::view-transition-new(root) {
+  transition: none !important;
+}
+
+/* View Transition API configuration */
+:root {
+  view-transition-name: root;
+}
+
+/* Body dark mode background */
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+.dark body,
+.dark {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+.dark ::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-gray-600;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
