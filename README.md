@@ -137,6 +137,10 @@ mysql -u root -p -e "CREATE DATABASE healthcare_saas CHARACTER SET utf8mb4 COLLA
 # Configurar .env no backend
 cd backend
 cp .env.example .env
+
+# Executar queries ddl
+mysql -u root -p -h localhost healthcare_saas < scripts/ddl/create_tables.sql
+
 # Edite DATABASE_URL com suas credenciais
 ```
 
