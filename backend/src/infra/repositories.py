@@ -74,6 +74,33 @@ class OperadoraRepository:
         result = await self.session.execute(query)
         return list(result.scalars().all())
     
+    async def search_with_offset(
+        self, 
+        search: Optional[str] = None,
+        uf: Optional[str] = None,
+        modalidade: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100
+    ) -> list[Operadora]:
+        """Busca com paginação por offset (para saltos de página)"""
+        query = select(Operadora)
+        
+        if search:
+            clean_search = search.replace(".", "").replace("/", "").replace("-", "")
+            query = query.where(
+                (Operadora.razao_social.ilike(f"%{search}%")) |
+                (Operadora.cnpj.ilike(f"%{clean_search}%"))
+            )
+        if uf:
+            query = query.where(Operadora.uf == uf)
+        if modalidade:
+            query = query.where(Operadora.modalidade == modalidade)
+        
+        query = query.order_by(Operadora.razao_social, Operadora.registro_ans)
+        query = query.offset(offset).limit(limit + 1)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+    
     async def count_filtered(
         self,
         search: Optional[str] = None,

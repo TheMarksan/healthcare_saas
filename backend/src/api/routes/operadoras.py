@@ -25,6 +25,7 @@ async def list_operadoras(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     cursor: Optional[str] = Query(None, description="razao_social|registro_ans cursor para keyset pagination"),
+    offset: Optional[int] = Query(None, ge=0, description="Offset para paginação direta (fallback)"),
     search: Optional[str] = None,
     uf: Optional[str] = None,
     modalidade: Optional[str] = None,
@@ -32,13 +33,23 @@ async def list_operadoras(
 ):
     repo = OperadoraRepository(db)
     
-    operadoras = await repo.search(
-        search=search,
-        uf=uf,
-        modalidade=modalidade,
-        cursor=cursor,
-        limit=limit
-    )
+    # Se offset fornecido, usa paginação por offset (mais lento, mas permite saltar páginas)
+    if offset is not None and cursor is None:
+        operadoras = await repo.search_with_offset(
+            search=search,
+            uf=uf,
+            modalidade=modalidade,
+            offset=offset,
+            limit=limit
+        )
+    else:
+        operadoras = await repo.search(
+            search=search,
+            uf=uf,
+            modalidade=modalidade,
+            cursor=cursor,
+            limit=limit
+        )
     
     has_next = len(operadoras) > limit
     if has_next:
@@ -55,7 +66,7 @@ async def list_operadoras(
         limit=limit,
         next_cursor=next_cursor,
         has_next=has_next,
-        has_prev=cursor is not None
+        has_prev=page > 1 or cursor is not None or (offset is not None and offset > 0)
     )
 
 

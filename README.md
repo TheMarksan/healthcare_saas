@@ -269,14 +269,18 @@ def normalize_trimestre(trimestre_str):
 
 **Problema:** Despesas com REG_ANS que não existe no cadastro de operadoras ativas
 
-**Tratamento:** Preservar com flag + placeholder
+**Tratamento:** Preservar com flag + placeholder + linkagem automática
 
 ```python
-# identify_unmatched_reg_ans() em validators.py
+# 1. Pipeline: identify_unmatched_reg_ans() em validators.py
 df['CadastroIncompleto'] = mask_sem_cnpj
-
-# Criar placeholder para razão social
 df.loc[mask_vazio, 'RazaoSocial'] = f"OPERADORA [{reg_ans}]"
+
+# 2. Banco: create_placeholder_operadoras.py
+# Cria operadoras na tabela 'operadoras' e linka despesas/métricas
+INSERT IGNORE INTO operadoras (registro_ans, razao_social, uf, modalidade, cnpj)
+UPDATE despesas_trimestrais SET operadora_id = o.id WHERE operadora_id IS NULL
+UPDATE metricas_operadoras SET operadora_id = o.id WHERE operadora_id IS NULL
 ```
 
 | Campo | Valor Aplicado |
@@ -284,7 +288,14 @@ df.loc[mask_vazio, 'RazaoSocial'] = f"OPERADORA [{reg_ans}]"
 | `RazaoSocial` | `"OPERADORA [123456]"` (placeholder com REG_ANS) |
 | `CNPJ` | Vazio |
 | `CadastroIncompleto` | `True` |
-| `Modalidade`, `UF` | Vazios |
+| `Modalidade`, `UF` | Vazios (herdados das despesas se disponíveis) |
+
+**Script `create_placeholder_operadoras.py`:**
+1. Busca operadoras órfãs (despesas sem `operadora_id`)
+2. Insere operadoras placeholder na tabela `operadoras`
+3. Atualiza `despesas_trimestrais.operadora_id` via JOIN
+4. Atualiza `metricas_operadoras.operadora_id` via JOIN
+5. Compatível com TiDB Cloud (SSL)
 
 **Log gerado:** `logs/unmatched_reg_ans.csv` com estatísticas por REG_ANS
 
@@ -292,6 +303,7 @@ df.loc[mask_vazio, 'RazaoSocial'] = f"OPERADORA [{reg_ans}]"
 - Operadoras podem ter sido desativadas mas ainda ter despesas históricas
 - Preservar dados permite análise de tendências
 - Flag permite filtrar em queries quando necessário
+- Linkagem garante que todas as operadoras apareçam nas views do sistema
 
 ---
 
@@ -568,30 +580,49 @@ FastAPI foi escolhido por:
 
 ### 4.2.2. Backend - Estratégia de Paginação
 
-**Decisão:** Keyset Pagination (cursor-based)
+**Decisão:** Paginação Híbrida (Keyset + Offset)
 
 **Implementação:**
 ```python
-# Cursor: "razao_social|registro_ans"
+# Keyset (cursor): "razao_social|registro_ans" - para navegação sequencial
 if cursor:
     parts = cursor.split('|')
     query = query.where(
         (Operadora.razao_social > cursor_razao) |
         ((Operadora.razao_social == cursor_razao) & (Operadora.registro_ans > cursor_reg))
     )
+
+# Offset: para saltos diretos a páginas distantes
+if offset is not None:
+    query = query.offset(offset).limit(limit + 1)
 ```
 
 **Comparação:**
-| Aspecto | Offset | Cursor/Keyset |
-|---------|--------|---------------|
-| Performance em páginas altas | O(n) - degrada | O(1) - constante |
-| Consistência com inserções | Pode pular/duplicar | Estável |
-| Implementação | Simples | Moderada |
+| Aspecto | Offset | Cursor/Keyset | Híbrido |
+|---------|--------|---------------|---------|
+| Performance páginas altas | O(n) - degrada | O(1) - constante | O(1) com cache |
+| Salto direto a página | ✅ Nativo | ❌ Requer N requests | ✅ Usa offset |
+| Consistência com inserções | Pode pular/duplicar | Estável | Estável (cursor) |
+| Implementação | Simples | Moderada | Moderada |
+
+**Estratégia no Frontend:**
+```typescript
+// useOperadoras.ts
+if (cachedCursor) {
+  // Cache hit: usa keyset pagination (mais eficiente)
+  fetchOperadoras({ cursor: cachedCursor });
+} else {
+  // Cache miss: usa offset para salto direto (evita N requests)
+  fetchWithOffset(targetPage);
+}
+```
 
 **Justificativa:**
-- ~2.000 operadoras: offset funcionaria, mas keyset é mais robusto
-- Ordenação por `razao_social` (busca comum) com `registro_ans` como tiebreaker
-- Preparado para crescimento do dataset
+- **Keyset** para navegação sequencial (próxima/anterior): O(1) constante
+- **Offset** como fallback para saltos diretos: evita N requisições sequenciais
+- Cache de cursors no frontend otimiza navegação frequente
+- Antes: acessar página 100 = 100 requisições (~30s)
+- Depois: acessar página 100 = 1 requisição com offset (~200ms)
 
 ---
 

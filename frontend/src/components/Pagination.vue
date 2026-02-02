@@ -23,7 +23,7 @@
           @click="pageNum !== '...' && $emit('goToPage', pageNum)"
           :disabled="pageNum === '...' || pageNum === page || loading"
           :class="[
-            'min-w-[36px] h-9 px-3 text-sm font-medium rounded-lg transition-colors',
+            'sm:min-w-[36px] h-9 px-2 text-sm font-medium rounded-lg transition-colors',
             pageNum === page
               ? 'bg-primary text-white'
               : pageNum === '...'
@@ -39,7 +39,7 @@
         size="sm"
         :disabled="!hasNext || loading"
         @click="$emit('next')"
-        class="px-3"
+        class="px-3 mr-4"
       >
         <ChevronRight class="w-4 h-4" />
       </Button>

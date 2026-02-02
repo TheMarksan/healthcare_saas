@@ -179,47 +179,50 @@ export function useOperadoras() {
           cursor: cachedCursor,
         });
       } else {
-        // For keyset pagination without cache, we need to fetch sequentially
-        // This is a limitation, so we fetch from the beginning up to target page
-        fetchSequentialPages(targetPage);
+        // Use offset-based pagination for distant pages (faster than sequential fetch)
+        fetchWithOffset(targetPage);
       }
     }
   }
 
-  async function fetchSequentialPages(targetPage: number) {
+  async function fetchWithOffset(targetPage: number) {
     loading.value = true;
+    error.value = null;
+    errorType.value = null;
+    
     try {
-      let cursor: string | null = null;
+      const offset = (targetPage - 1) * limit.value;
+      const params = new URLSearchParams({
+        page: String(targetPage),
+        limit: String(limit.value),
+        offset: String(offset),
+      });
+      if (search.value) params.append('search', search.value);
+      if (uf.value) params.append('uf', uf.value);
+      if (modalidade.value) params.append('modalidade', modalidade.value);
 
-      for (let p = 1; p <= targetPage; p++) {
-        const params = new URLSearchParams({
-          page: String(p),
-          limit: String(limit.value),
-        });
-        if (search.value) params.append('search', search.value);
-        if (uf.value) params.append('uf', uf.value);
-        if (modalidade.value) params.append('modalidade', modalidade.value);
-        if (cursor) params.append('cursor', cursor);
-
-        const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`);
-        const data: OperadoraListResponse = await res.json();
-
-        if (p === targetPage) {
-          operadoras.value = data.data;
-          total.value = data.total;
-          page.value = p;
-          hasNext.value = data.has_next;
-          hasPrev.value = p > 1;
-          nextCursor.value = data.next_cursor || null;
-        }
-
-        if (data.next_cursor) {
-          cursorCache.value.set(p + 1, data.next_cursor);
-          cursor = data.next_cursor;
-        } else {
-          break;
-        }
+      const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`);
+      
+      if (!res.ok) {
+        throw new Error(`Erro ${res.status}`);
       }
+      
+      const data: OperadoraListResponse = await res.json();
+
+      operadoras.value = data.data;
+      total.value = data.total;
+      page.value = targetPage;
+      hasNext.value = data.has_next;
+      hasPrev.value = targetPage > 1;
+      nextCursor.value = data.next_cursor || null;
+      
+      // Cache cursor for next page
+      if (data.next_cursor) {
+        cursorCache.value.set(targetPage + 1, data.next_cursor);
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Erro ao carregar operadoras';
+      errorType.value = 'generic';
     } finally {
       loading.value = false;
     }
