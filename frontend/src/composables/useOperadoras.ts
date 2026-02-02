@@ -193,7 +193,6 @@ export function useOperadoras() {
   async function fetchWithOffset(targetPage: number) {
     // Evita chamadas duplicadas
     if (loading.value) return;
-    
     loading.value = true;
     error.value = null;
     errorType.value = null;
