@@ -189,7 +189,7 @@ export function useOperadoras() {
     loading.value = true;
     error.value = null;
     errorType.value = null;
-    
+
     try {
       const offset = (targetPage - 1) * limit.value;
       const params = new URLSearchParams({
@@ -202,11 +202,11 @@ export function useOperadoras() {
       if (modalidade.value) params.append('modalidade', modalidade.value);
 
       const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`);
-      
+
       if (!res.ok) {
         throw new Error(`Erro ${res.status}`);
       }
-      
+
       const data: OperadoraListResponse = await res.json();
 
       operadoras.value = data.data;
@@ -215,7 +215,7 @@ export function useOperadoras() {
       hasNext.value = data.has_next;
       hasPrev.value = targetPage > 1;
       nextCursor.value = data.next_cursor || null;
-      
+
       // Cache cursor for next page
       if (data.next_cursor) {
         cursorCache.value.set(targetPage + 1, data.next_cursor);
