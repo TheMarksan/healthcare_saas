@@ -145,7 +145,6 @@ cp .env.example .env
 ```bash
 cd backend
 source ../venv/bin/activate
-pip install -r requirements.txt
 
 # Importar dados processados
 cd scripts/import

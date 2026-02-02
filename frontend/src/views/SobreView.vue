@@ -123,7 +123,7 @@
     <footer class="mt-8 py-6 border-t border-gray-200 dark:border-gray-700">
       <div class="text-center text-sm text-gray-500 dark:text-gray-400">
         <p>
-          Feito por <span class="font-semibold text-gray-700 dark:text-gray-300">Marcos Melo</span>
+          Feito por <span class="font-semibold text-gray-700 dark:text-gray-300"><a href="https://github.com/TheMarksan" target="_blank" rel="noopener noreferrer" class="underline hover:text-primary">Marcos Melo</a></span>
           <span class="mx-2">|</span>
           Projeto de Avaliação de SaaS Vertical
         </p>
