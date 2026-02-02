@@ -18,7 +18,7 @@ on:
       clean_mode:
         description: 'Modo de limpeza do banco'
         required: false
-        default: 'none'
+        default: 'clean'
         type: choice
         options:
           - none
@@ -72,8 +72,11 @@ jobs:
           cd backend/scripts/import
           
           # Determinar flag de limpeza
+          # Padrão 'clean': limpa despesas/métricas antes de importar
+          # Mantém operadoras (não reseta IDs)
+          # Ideal para dados baseados nos últimos 3 trimestres
           CLEAN_FLAG=""
-          if [ "${{ github.event.inputs.clean_mode }}" == "clean" ]; then
+          if [ "${{ github.event.inputs.clean_mode }}" == "clean" ] || [ -z "${{ github.event.inputs.clean_mode }}" ]; then
             CLEAN_FLAG="--clean"
           elif [ "${{ github.event.inputs.clean_mode }}" == "clean-all" ]; then
             CLEAN_FLAG="--clean-all"
