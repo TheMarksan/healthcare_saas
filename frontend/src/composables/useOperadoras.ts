@@ -68,7 +68,12 @@ export function useOperadoras() {
       if (modalidadeValue) params.append('modalidade', modalidadeValue);
       if (cursor) params.append('cursor', cursor);
 
-      const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`);
+      const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
 
       if (!res.ok) {
         if (res.status === 404) {
@@ -186,6 +191,9 @@ export function useOperadoras() {
   }
 
   async function fetchWithOffset(targetPage: number) {
+    // Evita chamadas duplicadas
+    if (loading.value) return;
+    
     loading.value = true;
     error.value = null;
     errorType.value = null;
@@ -201,7 +209,12 @@ export function useOperadoras() {
       if (uf.value) params.append('uf', uf.value);
       if (modalidade.value) params.append('modalidade', modalidade.value);
 
-      const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`);
+      const res = await fetch(`${API_BASE}/operadoras?${params.toString()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
 
       if (!res.ok) {
         throw new Error(`Erro ${res.status}`);
@@ -212,6 +225,7 @@ export function useOperadoras() {
       operadoras.value = data.data;
       total.value = data.total;
       page.value = targetPage;
+      limit.value = data.limit; // Sincroniza limit com a API
       hasNext.value = data.has_next;
       hasPrev.value = targetPage > 1;
       nextCursor.value = data.next_cursor || null;

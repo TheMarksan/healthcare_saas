@@ -57,6 +57,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Middleware para prevenir cache em endpoints de API
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
+app.add_middleware(NoCacheMiddleware)
+
+
 app.include_router(operadoras.router, prefix="/api/operadoras", tags=["operadoras"])
 app.include_router(analytics.router, prefix="/api/estatisticas", tags=["estatisticas"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])

@@ -1,11 +1,7 @@
 from fastapi import APIRouter, Query
-from pathlib import Path
-import csv
 from typing import Optional
 
 router = APIRouter()
-
-DATA_DIR = Path(__file__).parent.parent.parent.parent.parent / "data_pipeline" / "data"
 
 
 @router.get("")
@@ -24,30 +20,52 @@ async def get_unmatched_operadoras(
     offset: int = Query(0, ge=0)
 ):
     """
-    Operadoras sem match no cadastro ANS.
-    Foram criadas como placeholder durante a importação.
+    Operadoras sem match no cadastro ANS (placeholder).
+    Busca do banco de dados operadoras com cadastro_incompleto=true ou CNPJ nulo.
     """
-    csv_path = DATA_DIR / "trimestrais_contabeis" / "logs" / "unmatched_reg_ans.csv"
+    from sqlalchemy import text
+    from infra.database import AsyncSessionLocal
     
-    if not csv_path.exists():
-        return {"data": [], "total": 0, "message": "Arquivo de log não encontrado"}
-    
-    data = []
-    total = 0
-    
-    with open(csv_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-        total = len(rows)
+    async with AsyncSessionLocal() as session:
+        # Conta total - operadoras placeholder (CNPJ nulo ou cadastro incompleto)
+        count_query = text("""
+            SELECT COUNT(DISTINCT o.registro_ans) 
+            FROM operadoras o
+            WHERE o.cnpj IS NULL OR o.cnpj = ''
+        """)
+        total_result = await session.execute(count_query)
+        total = total_result.scalar_one()
         
-        for row in rows[offset:offset + limit]:
-            data.append({
-                "registro_ans": row.get("RegistroANS", ""),
-                "quantidade_registros": int(row.get("QuantidadeRegistros", 0)),
-                "razao_social": row.get("RazaoSocialPlaceholder", ""),
+        # Busca dados paginados com agregação de despesas
+        query = text("""
+            SELECT 
+                o.registro_ans,
+                o.razao_social,
+                o.uf,
+                o.modalidade,
+                COUNT(d.id) as quantidade_registros
+            FROM operadoras o
+            LEFT JOIN despesas_trimestrais d ON o.registro_ans = d.registro_ans
+            WHERE o.cnpj IS NULL OR o.cnpj = ''
+            GROUP BY o.registro_ans, o.razao_social, o.uf, o.modalidade
+            ORDER BY o.razao_social
+            LIMIT :limit OFFSET :offset
+        """)
+        result = await session.execute(query, {"limit": limit, "offset": offset})
+        rows = result.fetchall()
+        
+        data = [
+            {
+                "registro_ans": row.registro_ans,
+                "quantidade_registros": row.quantidade_registros or 0,
+                "razao_social": row.razao_social,
+                "uf": row.uf,
+                "modalidade": row.modalidade,
                 "tipo": "unmatched",
-                "descricao": "Operadora não encontrada no cadastro ANS"
-            })
+                "descricao": "Operadora não encontrada no cadastro ANS (placeholder)"
+            }
+            for row in rows
+        ]
     
     return {
         "data": data,
@@ -117,12 +135,17 @@ async def get_operadoras_sem_despesas(
 
 
 async def get_unmatched_count() -> int:
-    """Conta operadoras sem match"""
-    csv_path = DATA_DIR / "trimestrais_contabeis" / "logs" / "unmatched_reg_ans.csv"
-    if not csv_path.exists():
-        return 0
-    with open(csv_path, "r", encoding="utf-8") as f:
-        return sum(1 for _ in f) - 1  # -1 para o header
+    """Conta operadoras sem match (placeholder - CNPJ nulo)"""
+    from sqlalchemy import text
+    from infra.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as session:
+        query = text("""
+            SELECT COUNT(*) FROM operadoras 
+            WHERE cnpj IS NULL OR cnpj = ''
+        """)
+        result = await session.execute(query)
+        return result.scalar_one()
 
 
 async def get_sem_despesas_count() -> int:

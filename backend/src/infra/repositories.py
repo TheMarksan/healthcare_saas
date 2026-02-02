@@ -70,7 +70,8 @@ class OperadoraRepository:
                     ((Operadora.razao_social == cursor_razao) & (Operadora.registro_ans > cursor_reg))
                 )
         
-        query = query.order_by(Operadora.razao_social, Operadora.registro_ans).limit(limit + 1)
+        # Ordenação com ID como tiebreaker para resultados determinísticos (importante para TiDB)
+        query = query.order_by(Operadora.razao_social, Operadora.registro_ans, Operadora.id).limit(limit + 1)
         result = await self.session.execute(query)
         return list(result.scalars().all())
     
@@ -96,7 +97,8 @@ class OperadoraRepository:
         if modalidade:
             query = query.where(Operadora.modalidade == modalidade)
         
-        query = query.order_by(Operadora.razao_social, Operadora.registro_ans)
+        # Ordenação com ID como tiebreaker final para resultados determinísticos (importante para TiDB)
+        query = query.order_by(Operadora.razao_social, Operadora.registro_ans, Operadora.id)
         query = query.offset(offset).limit(limit + 1)
         result = await self.session.execute(query)
         return list(result.scalars().all())

@@ -33,8 +33,13 @@ async def list_operadoras(
 ):
     repo = OperadoraRepository(db)
     
+    # Log para debug de paginação
+    import logging
+    logging.info(f"[Pagination] page={page}, limit={limit}, offset={offset}, cursor={cursor}")
+    
     # Se offset fornecido, usa paginação por offset (mais lento, mas permite saltar páginas)
     if offset is not None and cursor is None:
+        logging.info(f"[Pagination] Using offset-based pagination with offset={offset}")
         operadoras = await repo.search_with_offset(
             search=search,
             uf=uf,
@@ -54,6 +59,12 @@ async def list_operadoras(
     has_next = len(operadoras) > limit
     if has_next:
         operadoras = operadoras[:limit]
+    
+    # Log para debug - verificar primeira operadora retornada
+    if operadoras:
+        logging.info(f"[Pagination] First result: id={operadoras[0].id}, razao_social={operadoras[0].razao_social[:30]}...")
+    else:
+        logging.info(f"[Pagination] No results returned for offset={offset}")
     
     total = await repo.count_filtered(search=search, uf=uf, modalidade=modalidade)
     # Cursor composto: razao_social|registro_ans para ordenação única
