@@ -58,7 +58,7 @@ jobs:
           MYSQL_USER: ${{ secrets.DB_USER }}
           MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
           MYSQL_DATABASE: ${{ secrets.DB_DATABASE }}
-          MYSQL_PORT: ${{ secrets.DB_PORT || '4000' }}
+          MYSQL_PORT: ${{ secrets.DB_PORT }}
           MYSQL_SSL: 'true'
         run: |
           cd backend/scripts/import

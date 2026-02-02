@@ -13,7 +13,7 @@ from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).parent.parent.parent / '.env')
+load_dotenv(Path(__file__).parent.parent.parent / '.env', override=False)
 
 # Configuração SSL para TiDB/PlanetScale
 ssl_config = None
